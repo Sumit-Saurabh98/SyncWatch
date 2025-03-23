@@ -3,7 +3,6 @@ import { Request, Response } from 'express';
 import cloudinary from '../config/cloudinary.js';
 import User from '../models/user.model.js';
 import fs from 'fs';
-import path from 'path';
 
 export const updateName = async (req: Request, res: Response): Promise<void> => {
 
@@ -90,4 +89,15 @@ export const updateProfilePicture = async (req: Request, res: Response): Promise
       res.status(500).json({ success: false, message: "Internal server error" });
     }
   });
+};
+
+
+export const getProfile = async (req: Request, res: Response) => {
+  try {
+      const user = req.user;
+      res.status(200).json({ user });
+  } catch (error) {
+      console.log("Error in getting profile:", error);
+      res.status(500).json({ message: "Internal server error: " + error });
+  }
 };

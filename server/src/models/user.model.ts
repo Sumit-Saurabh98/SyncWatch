@@ -19,6 +19,18 @@ const userSchema = new mongoose.Schema({
         type: String,
         default: "",
     },
+    emailVerified: {
+        type: Boolean,
+        default: false,
+    },
+    verificationToken: {
+        type: String,
+        default: "",
+    },
+    passwordResetToken: {
+        type: String,
+        default: "",
+    },
     joinedRooms: [
         {
             type: mongoose.Schema.Types.ObjectId,

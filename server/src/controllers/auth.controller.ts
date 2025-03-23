@@ -1,9 +1,11 @@
 import { Request, Response } from "express";
-import bcrypt from "bcryptjs"
+import bcrypt from "bcryptjs";
 import { strongPassword } from "../utils/password.js";
 import User from "../models/user.model.js";
 import { signToken } from "../utils/token.js";
 import { setCookie } from "../utils/cookie.js";
+import { sendVerificationEmail } from "../utils/email.js";
+import { generateVerificationCode } from "../utils/generateVerificationToken.js";
 
 export const register = async (req: Request, res: Response): Promise<void> => {
   const { name, email, password } = req.body;
@@ -37,16 +39,15 @@ export const register = async (req: Request, res: Response): Promise<void> => {
       password: hashedPassword,
     });
 
-    const token = signToken(newUser._id.toString());
+    const verificationToken = generateVerificationCode();
+    newUser.verificationToken = verificationToken;
+    await newUser.save();
 
-    setCookie(res, token);
-
-    const createdUser = await User.findById(newUser._id).select("-password");
+    await sendVerificationEmail(email, verificationToken);
 
     res.status(201).json({
       success: true,
       message: "Signup successful",
-      user: createdUser,
     });
   } catch (error) {
     console.log(error);
@@ -63,7 +64,7 @@ export const login = async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
-    const user = await User.findOne({ email })
+    const user = await User.findOne({ email });
 
     if (!user) {
       res.status(400).json({ success: false, message: "User not found" });
@@ -71,10 +72,23 @@ export const login = async (req: Request, res: Response): Promise<void> => {
     }
 
     const isPasswordCorrect = await bcrypt.compare(password, user.password);
-    console.log(isPasswordCorrect);
 
     if (!isPasswordCorrect) {
       res.status(400).json({ success: false, message: "Invalid credentials" });
+      return;
+    }
+
+    if (!user.emailVerified) {
+      res
+        .status(400)
+        .json({ success: false, message: "Please verify your email" });
+
+      const verificationToken = generateVerificationCode();
+      user.verificationToken = verificationToken;
+      await user.save();
+
+      await sendVerificationEmail(email, verificationToken);
+
       return;
     }
 
@@ -95,20 +109,92 @@ export const login = async (req: Request, res: Response): Promise<void> => {
   }
 };
 
-export const logout = async (req: Request, res: Response): Promise<void> => {
+export const verifyEmail = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  const { token } = req.body;
+  if (!token) {
+    res.status(400).json({ success: false, message: "Token is required" });
+    return;
+  }
+
   try {
-    res.cookie("synclearn_token", "", {
-    httpOnly: true, // prevent XSS attacks
-    sameSite: "strict", // prevent CSRF attacks
-    secure: process.env.NODE_ENV === "production",
-    maxAge: 7 * 24 * 60 * 60 * 1000,
-  });
-  res.status(200).json({
-    success: true,
-    message: "Logged out successfully",
-  });
+    const user = await User.findOne({ verificationToken: token });
+
+    if (!user) {
+      res.status(400).json({ success: false, message: "Invalid token" });
+      return;
+    }
+
+    user.emailVerified = true;
+    user.verificationToken = "";
+    await user.save();
+
+    res
+      .status(200)
+      .json({ success: true, message: "Email verified successfully" });
   } catch (error) {
     console.log(error);
     res.status(500).json({ success: false, message: "Internal server error" });
   }
 };
+
+export const logout = async (req: Request, res: Response): Promise<void> => {
+  try {
+    res.cookie("synclearn_token", "", {
+      httpOnly: true, // prevent XSS attacks
+      sameSite: "strict", // prevent CSRF attacks
+      secure: process.env.NODE_ENV === "production",
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    });
+    res.status(200).json({
+      success: true,
+      message: "Logged out successfully",
+    });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ success: false, message: "Internal server error" });
+  }
+};
+
+export const resendVerificationEmail = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  const { email } = req.body;
+  if (!email) {
+    res.status(400).json({ success: false, message: "Email is required" });
+    return;
+  }
+
+  try {
+    const user = await User.findOne({ email });
+
+    if (!user) {
+      res.status(400).json({ success: false, message: "User not found" });
+      return;
+    }
+
+    if (user.emailVerified) {
+      res
+        .status(400)
+        .json({ success: false, message: "Email already verified" });
+      return;
+    }
+
+    const verificationToken = generateVerificationCode();
+    user.verificationToken = verificationToken;
+    await user.save();
+
+    await sendVerificationEmail(email, verificationToken);
+
+    res.status(200).json({
+      success: true,
+      message: "Verification email sent successfully",
+    });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ success: false, message: "Internal server error" });
+  }
+}
