@@ -95,7 +95,7 @@ export const updateProfilePicture = async (req: Request, res: Response): Promise
 export const getProfile = async (req: Request, res: Response) => {
   try {
       const user = req.user;
-      res.status(200).json({ user });
+      res.status(200).json({ success: true, message: "Profile fetched successfully", user });
   } catch (error) {
       console.log("Error in getting profile:", error);
       res.status(500).json({ message: "Internal server error: " + error });

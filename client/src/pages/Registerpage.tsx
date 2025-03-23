@@ -52,7 +52,6 @@ const Registerpage = () => {
   });
 
   const onSubmit = async (values: z.infer<typeof signUpSchema>) => {
-    console.log(values);
    const res = await register(values.name, values.email, values.password, values.confirmPassword);
     form.reset();
     if(res){

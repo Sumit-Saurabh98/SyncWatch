@@ -21,8 +21,6 @@ function App() {
     checkAuth();
   }, [checkAuth])
 
-  console.log(user, "this is user");
-
 
   if(checkingAuth) return <LoadingPage />
 
@@ -35,7 +33,7 @@ function App() {
       <Route path="/rooms" element={user ? <Roompage /> : <Navigate to={"/login"} />} />
       <Route path="profile/:_id" element={user ? <Profilepage /> : <Navigate to={"/login"} />} />
       <Route path="notifications" element={user ? <NotificationPage /> : <Navigate to={"/login"} />} />
-      <Route path="verification" element={<VerificationPage />} />
+      <Route path="verification" element={!user ? <VerificationPage /> : <Navigate to={"/"} />} />
     </Routes>
     <ToastContainer
       position="top-center"

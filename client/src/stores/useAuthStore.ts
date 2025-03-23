@@ -207,22 +207,22 @@ export const useAuthStore = create<IAuthStore>((set, get) => ({
     set({ checkingAuth: true, checkAuthLoading: true });
     try {
       const response = await syncapi.get("/user/profile");
-
+  
       if (!response.data.success) {
         set({ user: null, checkingAuth: false, checkAuthLoading: false });
         return;
       }
-
+  
       set({
         user: response.data.user,
         checkingAuth: false,
         checkAuthLoading: false,
       });
-    } catch (error: unknown) {
-      console.error(error);
+    } catch (error) {
+      console.error("Auth error:", error);
       set({ user: null, checkingAuth: false, checkAuthLoading: false });
     } finally {
-      set({ checkAuthLoading: false });
+      set({ checkAuthLoading: false, checkingAuth: false });
     }
   },
 

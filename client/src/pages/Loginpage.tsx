@@ -47,10 +47,8 @@ const Loginpage = () => {
   });
 
   const onSubmit = async (values: z.infer<typeof loginSchema>) => {
-    console.log(values);
     const res = await login(values.email, values.password);
     form.reset();
-    console.log(res, user, "mere lall bahan->->");
     if(user){
       navigate("/");
     }
