@@ -16,6 +16,7 @@ export interface IAuthStore {
   checkAuth: () => Promise<void>;
   verifyEmail: (token: string) => Promise<boolean>;
   resendVerificationEmail: (email: string) => Promise<boolean>;
+  setUser: (user: IUser) => void;
 }
 
 export const useAuthStore = create<IAuthStore>((set, get) => ({
@@ -315,4 +316,6 @@ export const useAuthStore = create<IAuthStore>((set, get) => ({
       set({ isResendingVerificationEmail: false});
     }
   },
+
+  setUser: (user: IUser) => set({ user: user }),
 }));

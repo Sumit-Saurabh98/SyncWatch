@@ -15,6 +15,7 @@ import LoadingPage from "@/components/LoadingPage";
 import DropdownProfile from "@/components/DropdownProfile";
 const Homepage = () => {
   const {user, checkingAuth} = useAuthStore();
+  console.log(user, "this is current user");
   if(checkingAuth) return <LoadingPage />
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-900 via-violet-800 to-indigo-900 text-white">
