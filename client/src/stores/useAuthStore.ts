@@ -10,12 +10,16 @@ export interface IAuthStore {
   checkingAuth: boolean;
   isVerifyingToken: boolean;
   isResendingVerificationEmail: boolean;
+  isSendingEmailForPasswordReset: boolean;
+  isResettingPassword: boolean;
   register: (name: string, email: string, password: string, confirmPassword: string) => Promise<boolean>;
   login: (email: string, password: string) => Promise<boolean>;
   logout: () => Promise<void>;
   checkAuth: () => Promise<void>;
   verifyEmail: (token: string) => Promise<boolean>;
   resendVerificationEmail: (email: string) => Promise<boolean>;
+  sendtokenForresetPassword: (email: string) => Promise<boolean>;
+  resetPassword: (token: string, password: string) => Promise<boolean>;
   setUser: (user: IUser) => void;
 }
 
@@ -27,6 +31,8 @@ export const useAuthStore = create<IAuthStore>((set, get) => ({
   checkingAuth: true,
   isVerifyingToken: false,
   isResendingVerificationEmail: false,
+  isSendingEmailForPasswordReset: false,
+  isResettingPassword: false,
 
 
   register: async (name, email, password, confirmPassword) => {
@@ -314,6 +320,96 @@ export const useAuthStore = create<IAuthStore>((set, get) => ({
       return false
     } finally {
       set({ isResendingVerificationEmail: false});
+    }
+  },
+
+  sendtokenForresetPassword: async (email) => {
+    set({ isSendingEmailForPasswordReset: true });
+    try {
+      const response = await syncapi.post("/auth/send-password-reset-email", { email });
+
+      if(!response.data.success){
+        toast.error(response.data.message || "Something went wrong", {
+          style:{
+            borderRadius: "10px",
+            background: "#ec4899",
+            color: "white",
+          }
+        });
+        set({ isSendingEmailForPasswordReset: false, });
+        return false;
+      }
+
+      set({ isSendingEmailForPasswordReset: false});
+      toast.success(response.data.message || "Verification email sent successfully", {
+        style:{
+          borderRadius: "10px",
+          background: "#ec4899",
+          color: "white",
+        }
+      });
+      return true
+    } catch (error) {
+      console.error(error);
+      set({ isSendingEmailForPasswordReset: false,});
+      const axiosError = error as {
+        response?: { data?: { message?: string } };
+      };
+      toast.error(axiosError.response?.data?.message || "Something went wrong", {
+        style:{
+          borderRadius: "10px",
+          background: "#ec4899",
+          color: "white",
+        }
+      });
+      return false
+    }finally{
+      set({ isSendingEmailForPasswordReset: false});
+    }
+  },
+
+  resetPassword: async (token, password) => {
+    set({ isResettingPassword: true });
+    try {
+      const response = await syncapi.post("/auth/reset-password", { token, password });
+
+      if(!response.data.success){
+        toast.error(response.data.message || "Something went wrong", {
+          style:{
+            borderRadius: "10px",
+            background: "#ec4899",
+            color: "white",
+          }
+        });
+        set({ isResettingPassword: false, });
+        return false;
+      }
+
+      set({ isResettingPassword: false});
+      toast.success(response.data.message || "Password reset successfully", {
+        style:{
+          borderRadius: "10px",
+          background: "#ec4899",
+          color: "white",
+        }
+      });
+      return true
+    } catch (error) {
+      console.error(error);
+      set({ isResettingPassword: false,});
+      const axiosError = error as {
+        response?: { data?: { message?: string } };
+      };
+      toast.error(axiosError.response?.data?.message || "Something went wrong", {
+        style:{
+          borderRadius: "10px",
+          background: "#ec4899",
+          color: "white",
+        }
+      });
+      return false
+    }finally{
+      set({ isResettingPassword: false});
     }
   },
 

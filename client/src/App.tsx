@@ -10,6 +10,7 @@ import { useEffect } from "react";
 import Profilepage from "./pages/Profilepage";
 import NotificationPage from "./pages/NotificationPage";
 import VerificationPage from "./pages/VerificationPage";
+import ForgotPassword from "./pages/ForgotPassword";
 
 
 
@@ -33,7 +34,8 @@ function App() {
       <Route path="/rooms" element={user ? <Roompage /> : <Navigate to={"/login"} />} />
       <Route path="profile/:_id" element={user ? <Profilepage /> : <Navigate to={"/login"} />} />
       <Route path="notifications" element={user ? <NotificationPage /> : <Navigate to={"/login"} />} />
-      <Route path="verification" element={!user ? <VerificationPage /> : <Navigate to={"/"} />} />
+      <Route path="/verification" element={!user ? <VerificationPage /> : <Navigate to={"/"} />} />
+      <Route path="/forgotpassword" element={<ForgotPassword/>} />
     </Routes>
     <ToastContainer
       position="top-center"

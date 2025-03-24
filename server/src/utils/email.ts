@@ -184,7 +184,7 @@ export const sendVerificationEmail = async (email: string, code: string) => {
             
             <div class="code-container">
                 <div class="verification-code">${code}</div>
-                <div class="code-instructions">Enter this 6-digit code on the verification page</div>
+                <div class="code-instructions">Please copy this code and enter it on the verification page</div>
             </div>
             
             <div class="message">

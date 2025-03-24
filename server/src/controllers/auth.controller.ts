@@ -39,7 +39,7 @@ export const register = async (req: Request, res: Response): Promise<void> => {
       password: hashedPassword,
     });
 
-    const verificationToken = generateVerificationCode();
+    const verificationToken = generateVerificationCode(email);
     newUser.verificationToken = verificationToken;
     await newUser.save();
 
@@ -83,7 +83,7 @@ export const login = async (req: Request, res: Response): Promise<void> => {
         .status(400)
         .json({ success: false, message: "Please verify your email" });
 
-      const verificationToken = generateVerificationCode();
+      const verificationToken = generateVerificationCode(email);
       user.verificationToken = verificationToken;
       await user.save();
 
@@ -183,7 +183,7 @@ export const resendVerificationEmail = async (
       return;
     }
 
-    const verificationToken = generateVerificationCode();
+    const verificationToken = generateVerificationCode(email);
     user.verificationToken = verificationToken;
     await user.save();
 
@@ -193,6 +193,66 @@ export const resendVerificationEmail = async (
       success: true,
       message: "Verification email sent successfully",
     });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ success: false, message: "Internal server error" });
+  }
+}
+
+export const resetPasswordToken = async (req: Request, res: Response): Promise<void> => {
+  const { email } = req.body;
+  if (!email) {
+    res.status(400).json({ success: false, message: "Email is required" });
+    return;
+  }
+
+  try {
+    const user = await User.findOne({ email });
+
+    if (!user) {
+      res.status(400).json({ success: false, message: "User not found" });
+      return;
+    }
+
+    const verificationToken = generateVerificationCode(email);
+    user.passwordResetToken = verificationToken;
+    await user.save();
+
+    await sendVerificationEmail(email, verificationToken);
+
+    res.status(200).json({
+      success: true,
+      message: "Token sent successfully!, please check your email",
+    });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ success: false, message: "Internal server error" });
+  }
+}
+
+export const updatePassword = async (req: Request, res: Response): Promise<void> => {
+  const { password, token } = req.body;
+
+  if (!password || !token) {
+    res.status(400).json({ success: false, message: "Password and token are required" });
+    return;
+  }
+
+  try {
+    const user = await User.findOne({ passwordResetToken: token });
+
+    if (!user) {
+      res.status(400).json({ success: false, message: "Invalid token" });
+      return;
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    user.password = hashedPassword;
+    user.passwordResetToken = "";
+    await user.save();
+
+    res.status(200).json({ success: true, message: "Password updated successfully" });
   } catch (error) {
     console.log(error);
     res.status(500).json({ success: false, message: "Internal server error" });

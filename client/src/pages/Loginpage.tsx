@@ -189,18 +189,12 @@ const Loginpage = () => {
                       </div>
                     </FormControl>
                     <FormMessage className="text-pink-500" />
-                    <div className="flex items-center justify-between">
+                    <div className="flex justify-end">
                       <Link
                         to="/forgotpassword"
                         className="text-sm text-pink-400 hover:text-pink-300"
                       >
                         Forgot password?
-                      </Link>
-                      <Link
-                        to="/verification"
-                        className="text-sm text-pink-400 hover:text-pink-300"
-                      >
-                        Verify account
                       </Link>
                     </div>
                   </FormItem>

@@ -5,6 +5,7 @@ export interface IUser {
   profilePicture: string;
   emailVerified: boolean;
   verificationToken: string;
+  passwordResetToken: string;
   joinedRooms: string[];
   createdRooms: string[];
   password: string;
