@@ -1,9 +1,8 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useParams, useNavigate } from "react-router-dom";
-import { format } from "date-fns";
 import { Camera, Edit, Save, X, Video, Users, Calendar, Mail, Check } from "lucide-react";
 import LoadingPage from "@/components/LoadingPage";
 import { useAuthStore } from "@/stores/useAuthStore";
@@ -15,6 +14,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { useUserStore } from "@/stores/useUserStore";
+import { getInitials } from "@/utils/getInitials";
+import { formatDate } from "@/utils/formateDates";
 
 // Schema for name update
 const profileSchema = z.object({
@@ -27,9 +28,10 @@ const profileSchema = z.object({
 type ProfileFormValues = z.infer<typeof profileSchema>;
 
 const ProfilePage = () => {
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
   const { _id } = useParams();
   const { user, checkingAuth } = useAuthStore();
-  const { updateUserName, updateProfilePicture, isUpdatingProfilePicture, isUpdatingName } = useUserStore();
+  const { updateUserName, updateProfilePicture } = useUserStore();
   const navigate = useNavigate();
   
   const [isUpdating, setIsUpdating] = useState(false);
@@ -55,29 +57,33 @@ const ProfilePage = () => {
     return null;
   }
 
-  // Handle image selection
-  const handleImageSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
-    if (event.target.files && event.target.files[0]) {
-      const file = event.target.files[0];
+  // Handle image change when file is selected
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (files && files[0]) {
+      const file = files[0];
       setSelectedImage(file);
       
-      // Create a preview URL
-      const fileUrl = URL.createObjectURL(file);
-      setPreviewUrl(fileUrl);
+      // Create preview URL
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const result = reader.result as string;
+        setPreviewUrl(result);
+      };
+      reader.readAsDataURL(file);
     }
   };
 
-  // Upload the selected image
-  const handleImageUpload = async () => {
-    if (!selectedImage) return;
+  // Handle saving the profile picture
+  const handleSaveImage = async () => {
+    if (!previewUrl) return;
     
     setIsUpdating(true);
     try {
-      console.log(selectedImage, "from component");
-      await updateProfilePicture(selectedImage);
+      await updateProfilePicture(previewUrl);
       setSelectedImage(null);
-      setPreviewUrl(null);
     } catch (error) {
+      console.error("Failed to update profile picture:", error);
     } finally {
       setIsUpdating(false);
     }
@@ -90,7 +96,7 @@ const ProfilePage = () => {
   };
 
   // Handle name update
-  const onSubmit = async (values: ProfileFormValues) => {
+  const onSubmitNameUpdate = async (values: ProfileFormValues) => {
     setIsUpdating(true);
     try {
       await updateUserName(values.name);
@@ -102,23 +108,6 @@ const ProfilePage = () => {
     }
   };
 
-  // Format date for display
-  const formatDate = (dateString: Date) => {
-    try {
-      return format(new Date(dateString), "MMM d, yyyy");
-    } catch (error) {
-      return "Unknown date";
-    }
-  };
-
-  // Get initials for avatar fallback
-  const getInitials = (name: string) => {
-    return name
-      .split(" ")
-      .map((n) => n[0])
-      .join("")
-      .toUpperCase();
-  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#0f0821] to-[#1e1246] p-4 md:p-6">
@@ -156,7 +145,7 @@ const ProfilePage = () => {
                           <Button 
                             size="icon" 
                             className="h-8 w-8 rounded-full bg-green-600 hover:bg-green-700"
-                            onClick={handleImageUpload}
+                            onClick={handleSaveImage}
                             disabled={isUpdating}
                           >
                             <Save className="h-4 w-4" />
@@ -175,11 +164,12 @@ const ProfilePage = () => {
                             <Camera className="h-4 w-4" />
                           </div>
                           <input 
-                            id="profile-image" 
-                            type="file" 
-                            className="hidden" 
+                            ref={fileInputRef}
+                            id="profile-image"
+                            type="file"
                             accept="image/*"
-                            onChange={handleImageSelect}
+                            className="hidden"
+                            onChange={handleImageChange}
                           />
                         </label>
                       )}
@@ -192,7 +182,7 @@ const ProfilePage = () => {
                   <div className="flex flex-col md:flex-row md:items-center gap-2">
                     {isEditingName ? (
                       <Form {...form}>
-                        <form onSubmit={form.handleSubmit(onSubmit)} className="flex gap-2">
+                        <form onSubmit={form.handleSubmit(onSubmitNameUpdate)} className="flex gap-2">
                           <FormField
                             control={form.control}
                             name="name"

@@ -6,7 +6,7 @@ export interface IUserStore {
   isUpdatingName: boolean;
   isUpdatingProfilePicture: boolean;
   updateUserName: (name: string) => Promise<boolean>;
-  updateProfilePicture: (file: File) => Promise<boolean>;
+  updateProfilePicture: (file: string) => Promise<boolean>;
 }
 
 export const useUserStore = create<IUserStore>((set, get) => ({
@@ -60,12 +60,10 @@ export const useUserStore = create<IUserStore>((set, get) => ({
   updateProfilePicture: async (profilePicture) => {
     set({ isUpdatingProfilePicture: true });
     try {
-      // Create a FormData object instead of sending JSON
-      const formData = new FormData();
-      formData.append('profilePicture', profilePicture);
-      
-      // Set the right headers for multipart/form-data (syncapi should handle this)
-      const response = await syncapi.patch("/user/update-profile-picture", formData);
+
+      const response = await syncapi.patch("/user/update-profile-picture", {profilePicture});
+
+      useAuthStore.getState().setUser(response.data.user);
       
       if(!response.data.success){
         toast.error(response.data.message || "Something went wrong", {
