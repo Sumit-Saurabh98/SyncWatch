@@ -10,7 +10,6 @@ import {
   Eye,
   EyeOff,
   ArrowRight,
-  Github,
   Lock,
   Mail,
   User,
@@ -35,7 +34,7 @@ const Loginpage = () => {
   const navigate = useNavigate();
   const [showPassword, setShowPassword] = React.useState(false);
 
-  const {user, login, loginLoading} = useAuthStore()
+  const {user, login, googleLogin, loginLoading} = useAuthStore()
 
   const form = useForm<z.infer<typeof loginSchema>>({
     resolver: zodResolver(loginSchema),
@@ -251,21 +250,13 @@ const Loginpage = () => {
 
             <div className="mt-6">
               <Button
+              onClick={googleLogin}
                 variant="outline"
                 className="w-full border-gray-700 text-white bg-transparent hover:bg-gray-800"
               >
                 <FcGoogle className="mr-2 h-4 w-4" />
                 Google
               </Button>
-              <div className="mt-6">
-                <Button
-                  variant="outline"
-                  className="w-full border-gray-700 text-white bg-transparent  hover:bg-gray-800"
-                >
-                  <Github className="mr-2 h-4 w-4" />
-                  GitHub
-                </Button>
-              </div>
             </div>
           </div>
 

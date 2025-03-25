@@ -66,6 +66,11 @@ export const login = async (req: Request, res: Response): Promise<void> => {
 
     const user = await User.findOne({ email });
 
+    if(user?.googleId){
+      res.status(400).json({ success: false, message: "You have logged in with google" });
+      return;
+    }
+
     if (!user) {
       res.status(400).json({ success: false, message: "User not found" });
       return;
@@ -208,6 +213,11 @@ export const resetPasswordToken = async (req: Request, res: Response): Promise<v
 
   try {
     const user = await User.findOne({ email });
+
+    if(user?.googleId){
+      res.status(400).json({ success: false, message: "You have logged in with google" });
+      return;
+    }
 
     if (!user) {
       res.status(400).json({ success: false, message: "User not found" });

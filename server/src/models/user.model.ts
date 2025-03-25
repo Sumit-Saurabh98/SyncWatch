@@ -12,9 +12,12 @@ const userSchema = new mongoose.Schema({
         unique: true,
         index: true,
     },
-    password: {
+    googleId: {
         type: String,
-        required: true,
+        default: "",
+    },
+    password: {
+        type: String
     },
     profilePicture: {
         type: String,

@@ -20,6 +20,7 @@ export interface IAuthStore {
   resendVerificationEmail: (email: string) => Promise<boolean>;
   sendtokenForresetPassword: (email: string) => Promise<boolean>;
   resetPassword: (token: string, password: string) => Promise<boolean>;
+  googleLogin: () => Promise<void>;
   setUser: (user: IUser) => void;
 }
 
@@ -412,6 +413,10 @@ export const useAuthStore = create<IAuthStore>((set, get) => ({
       set({ isResettingPassword: false});
     }
   },
+
+  googleLogin: async () => {
+    window.location.href = `${import.meta.env.VITE_SERVER_URL}/api/auth/google`;
+},
 
   setUser: (user: IUser) => set({ user: user }),
 }));

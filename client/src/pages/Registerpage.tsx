@@ -10,7 +10,6 @@ import {
   Eye,
   EyeOff,
   ArrowRight,
-  Github,
   Lock,
   Mail,
   User,
@@ -38,7 +37,7 @@ const Registerpage = () => {
   const [showPassword, setShowPassword] = React.useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = React.useState(false);
   
-  const {register, signUpLoading} = useAuthStore()
+  const {register, googleLogin, signUpLoading} = useAuthStore()
 
   const form = useForm<z.infer<typeof signUpSchema>>({
     resolver: zodResolver(signUpSchema),
@@ -259,21 +258,13 @@ const Registerpage = () => {
 
               <div className="mt-6">
                 <Button
+                onClick={googleLogin}
                   variant="outline"
                   className="w-full border-gray-700 text-white bg-transparent hover:bg-gray-800"
                 >
                   <FcGoogle className="mr-2 h-4 w-4" />
                   Google
                 </Button>
-                <div className="mt-6">
-                  <Button
-                    variant="outline"
-                    className="w-full border-gray-700 text-white bg-transparent  hover:bg-gray-800"
-                  >
-                    <Github className="mr-2 h-4 w-4" />
-                    GitHub
-                  </Button>
-                </div>
               </div>
             </div>
 
