@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import Room from "../models/room.model.js";
 import User from "../models/user.model.js";
+import { thumbnailGenerator } from "../utils/thumbnailGenerator.js";
 
 export const createRoom = async (req: Request, res: Response): Promise<void> => {
     const {name, description, videoUrl} = req.body;
@@ -17,7 +18,8 @@ export const createRoom = async (req: Request, res: Response): Promise<void> => 
             res.status(400).json({success: false, message: "Room already exists with this name"});
             return;
         }
-        const room = await Room.create({name, description, videoUrl, createdBy: req.user._id, participants: [{userId:req.user._id, role: 'host'}]});
+        const {maxResolution} = thumbnailGenerator(videoUrl);
+        const room = await Room.create({name, description, videoUrl, thumbnailUrl: maxResolution, createdBy: req.user._id, participants: [{userId:req.user._id, role: 'host'}]});
 
         const user = await User.findById(req.user._id);
 
@@ -398,7 +400,9 @@ export const changeRoomVideoUrl = async (req: Request, res: Response): Promise<v
             res.status(404).json({success: false, message: "Room not found"});
             return;
         }
+        const {maxResolution} = thumbnailGenerator(videoUrl);
         room.videoUrl = videoUrl;
+        room.thumbnailUrl = maxResolution;
         await room.save();
         res.status(200).json({success: true, message: "Room video URL changed successfully", room});
     } catch (error) {

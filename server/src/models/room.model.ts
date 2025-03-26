@@ -1,5 +1,6 @@
 import mongoose from "mongoose";
-import { IRoom } from "../utils/interfaces";
+import { IRoom } from "../utils/interfaces.js";
+import { Categories } from "../utils/roomEnum.js";
 
 const roomSchema = new mongoose.Schema(
   {
@@ -15,9 +16,26 @@ const roomSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
+    thumbnailUrl: {
+      type: String,
+      default: "",
+    },
     createdBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
+      required: true,
+    },
+    category: {
+      type: String,
+      required: true,
+      enum: Object.values(Categories),
+    },
+    isLive: {
+      type: Boolean,
+      default: false,
+    },
+    startDateTime: {
+      type: Date,
       required: true,
     },
     isPrivate: {
@@ -26,6 +44,10 @@ const roomSchema = new mongoose.Schema(
     },
     accessCode: {
       type: String,
+    },
+    isActive: {
+      type: Boolean,
+      default: true,
     },
     participants: [
       {
@@ -54,11 +76,7 @@ const roomSchema = new mongoose.Schema(
         type: Date,
         default: Date.now(),
       },
-    },
-    isActive: {
-      type: Boolean,
-      default: true,
-    },
+    }
   },
   {
     timestamps: true,

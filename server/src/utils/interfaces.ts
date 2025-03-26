@@ -22,13 +22,15 @@ export interface IRoom {
   createdBy: string;
   isPrivate: boolean;
   accessCode: string;
+  thumbnailUrl: string;
+  isActive: boolean;
+  isLive: boolean;
   participants: IParticipant[];
   videoState: {
     currentTime: number;
     isPlaying: boolean;
     lastUpdated: Date;
   };
-  isActive: boolean;
   createdAt: Date;
   updatedAt: Date;
 }
