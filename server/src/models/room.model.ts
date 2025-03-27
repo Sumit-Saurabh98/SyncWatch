@@ -1,6 +1,5 @@
 import mongoose from "mongoose";
 import { IRoom } from "../utils/interfaces.js";
-import { Categories } from "../utils/roomEnum.js";
 
 const roomSchema = new mongoose.Schema(
   {
@@ -27,8 +26,7 @@ const roomSchema = new mongoose.Schema(
     },
     category: {
       type: String,
-      required: true,
-      enum: Object.values(Categories),
+      required: true
     },
     isLive: {
       type: Boolean,

@@ -73,20 +73,12 @@ const DropdownProfile = () => {
             <span>Profile</span>
           </DropdownMenuItem>
         </Link>
-        {/* <DropdownMenuItem className="cursor-pointer hover:bg-indigo-800/80 focus:bg-indigo-800/80">
-          <History className="mr-2 h-4 w-4 text-pink-400" />
-          <span>Watch History</span>
-        </DropdownMenuItem> */}
         <Link to="/notifications">
           <DropdownMenuItem className="cursor-pointer hover:bg-indigo-800/80 focus:bg-indigo-800/80">
             <Bell className="mr-2 h-4 w-4 text-pink-400" />
             <span>Notifications</span>
           </DropdownMenuItem>
         </Link>
-        {/* <DropdownMenuItem className="cursor-pointer hover:bg-indigo-800/80 focus:bg-indigo-800/80">
-          <Settings className="mr-2 h-4 w-4 text-pink-400" />
-          <span>Settings</span>
-        </DropdownMenuItem> */}
         <DropdownMenuSeparator className="bg-indigo-700/50" />
         <DropdownMenuItem
           className="cursor-pointer hover:bg-indigo-800/80 focus:bg-indigo-800/80 text-red-400"

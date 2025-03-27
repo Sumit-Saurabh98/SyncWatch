@@ -16,34 +16,19 @@ import {
   Clock,
   ChevronDown,
   ChevronUp,
-  ExternalLink
+  Edit
 } from "lucide-react";
-
-export interface RoomData {
-  _id: number;
-  name: string;
-  description: string;
-  category: string;
-  videoUrl: string;
-  thumbnailUrl: string;
-  startDateTime: string;
-  isLive: boolean;
-  createdBy: string;
-  isActive: boolean;
-  isPrivate: boolean;
-  participants: {
-    userId: string;
-    role: string;
-  }[];
-}
+import { IRoom } from "@/utils/interfaces";
+import { useAuthStore } from "@/stores/useAuthStore";
 
 interface RoomCardProps {
-  room: RoomData;
+  room: IRoom;
 }
 
 const RoomCard: React.FC<RoomCardProps> = ({ room }) => {
   const [isNameExpanded, setIsNameExpanded] = useState(false);
   const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
+  const {user} = useAuthStore()
 
   const formatDateTime = (dateString: string) => {
     const date = new Date(dateString);
@@ -146,13 +131,23 @@ const RoomCard: React.FC<RoomCardProps> = ({ room }) => {
             <span>{formatDateTime(room.startDateTime)}</span>
           </div>
 
-          <Button 
+          {
+            user?._id !== room.createdBy._id ? (
+              <Button 
             className="mt-auto w-full bg-pink-500/20 border-2 border-pink-500/50 text-white hover:bg-pink-500/30 transition-all flex items-center justify-center"
           >
             <Play className="mr-2 h-4 w-4 text-pink-400" />
             Join Room
-            <ExternalLink className="ml-2 h-4 w-4 text-pink-400" />
           </Button>
+            ) : (
+              <Button 
+            className="mt-auto w-full bg-pink-500/20 border-2 border-pink-500/50 text-white hover:bg-pink-500/30 transition-all flex items-center justify-center"
+          >
+            <Edit className="mr-2 h-4 w-4 text-pink-400" />
+            Edit
+          </Button>
+            )
+          }
         </CardContent>
       </Card>
     </motion.div>

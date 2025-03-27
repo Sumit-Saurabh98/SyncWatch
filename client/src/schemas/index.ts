@@ -1,5 +1,5 @@
 import {z} from 'zod'
-
+import { categories } from '@/utils/category';
 export const signUpSchema = z
 .object({
   name: z.string().min(2, { message: "Name must be at least 2 characters" }),
@@ -30,8 +30,6 @@ export const loginSchema = z.object({
     code: z
       .string()
       .min(6, "Verification code must be 6 digits")
-      .max(6, "Verification code must be 6 digits")
-      .regex(/^\d{6}$/, "Verification code must contain only numbers")
   });
 
   export const emailSchema = z.object({
@@ -39,4 +37,27 @@ export const loginSchema = z.object({
       .string()
       .min(1, "Email is required")
       .email("Please enter a valid email address"),
+  });
+
+
+
+
+  export const createRoomSchema = z.object({
+    name: z.string()
+      .min(3, { message: "Room name must be at least 3 characters" })
+      .max(100, { message: "Room name cannot exceed 100 characters" }),
+    description: z.string()
+      .min(10, { message: "Description must be at least 10 characters" })
+      .max(500, { message: "Description cannot exceed 500 characters" }),
+    videoUrl: z.string().url({ message: "Invalid video URL" }),
+    category: z.enum(categories, {
+      errorMap: () => ({ message: "Please select a valid category" })
+    }),
+    startDateTime: z.date({
+      required_error: "Start date and time are required",
+      invalid_type_error: "Invalid date and time"
+    }).refine((date) => date > new Date(), {
+      message: "Start date and time must be in the future",
+      path: ["startDateTime"]
+    })
   });

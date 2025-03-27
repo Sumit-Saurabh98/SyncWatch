@@ -38,10 +38,6 @@ const VerificationPage = () => {
     }
   };
 
-  const resendVerificationCode = () => {
-   
-  }
-
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#0f0821] to-[#1e1246] p-4">
       <div className="w-full max-w-md">
@@ -54,7 +50,7 @@ const VerificationPage = () => {
           <div className="p-8">
             {/* Message */}
             <p className="text-[#c7c7d9] mb-6 text-center">
-              Please enter the 6-digit code sent to your email to complete verification
+              Please enter the code sent to your email to complete verification
             </p>
 
             {/* Verification Code Form */}
@@ -70,8 +66,8 @@ const VerificationPage = () => {
                         <div className="relative">
                           <Input
                             {...field}
-                            placeholder="Enter 6-digit code"
-                            maxLength={6}
+                            placeholder="Enter code"
+                            minLength={6}
                             className="bg-[#2a1a5e] border-[#7c3aed]/40 text-white text-center text-xl tracking-widest h-14 focus-visible:ring-[#ec4899] focus-visible:border-[#ec4899]"
                           />
                           <div className="absolute inset-0 rounded-md pointer-events-none bg-gradient-to-r from-[#7c3aed]/10 to-[#ec4899]/10 blur-sm -z-10"></div>

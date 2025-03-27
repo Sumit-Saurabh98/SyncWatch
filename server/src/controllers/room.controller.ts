@@ -4,9 +4,9 @@ import User from "../models/user.model.js";
 import { thumbnailGenerator } from "../utils/thumbnailGenerator.js";
 
 export const createRoom = async (req: Request, res: Response): Promise<void> => {
-    const {name, description, videoUrl} = req.body;
+    const {name, description, videoUrl, category, startDateTime} = req.body;
 
-    if( !name || !description || !videoUrl) {
+    if( !name || !description || !videoUrl || !category || !startDateTime) {
         res.status(400).json({success: false, message: "All fields are required"});
         return;
     }
@@ -19,7 +19,7 @@ export const createRoom = async (req: Request, res: Response): Promise<void> => 
             return;
         }
         const {maxResolution} = thumbnailGenerator(videoUrl);
-        const room = await Room.create({name, description, videoUrl, thumbnailUrl: maxResolution, createdBy: req.user._id, participants: [{userId:req.user._id, role: 'host'}]});
+        const room = await Room.create({name, description, videoUrl, thumbnailUrl: maxResolution, category, startDateTime, createdBy: req.user._id, participants: [{userId:req.user._id, role: 'host'}]});
 
         const user = await User.findById(req.user._id);
 
@@ -157,7 +157,10 @@ export const getRoomJoinedByUser = async (req: Request, res: Response): Promise<
 
 export const getAllRooms = async (req: Request, res: Response): Promise<void> => {
     try {
-        const rooms = await Room.find();
+        const rooms = await Room.find().populate({
+            path: 'createdBy',
+            select: 'name profilePicture'
+        });
         res.status(200).json({success: true, message: "Rooms fetched successfully", rooms});
     } catch (error) {
         console.log(error);

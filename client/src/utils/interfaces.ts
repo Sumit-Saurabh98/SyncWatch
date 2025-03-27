@@ -13,3 +13,27 @@ export interface IUser {
   createdAt: Date;
   updatedAt: Date;
 }
+
+export interface IRoom {
+  _id: string;
+  name: string;
+  description: string;
+  videoUrl: string;
+  thumbnailUrl: string;
+  createdBy: {
+    _id: string;
+    name: string;
+    profilePicture: string;
+  };
+  category: string;
+  startDateTime: string;
+  isLive: boolean;
+  isActive: boolean;
+  isPrivate: boolean;
+  participants: {
+    userId: string;
+    role: string;
+  }[];
+  createdAt: Date;
+  updatedAt: Date;
+}
