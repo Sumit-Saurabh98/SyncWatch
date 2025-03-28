@@ -59,7 +59,6 @@ const RoomsPage: React.FC = () => {
     ...rooms,
   ];
 
-  // Remove duplicates from combined rooms
   const uniqueRooms = Array.from(
     new Map(allRoomsCombined.map((room) => [room._id, room])).values()
   );

@@ -8,6 +8,7 @@ export interface IRoomStore {
   isGettingRoomsCreatedByUser: boolean;
   isGettingRoomsJoinedByUser: boolean;
   isGettingAllRooms: boolean;
+  isJoiningPublicRoom: boolean;
   rooms: IRoom[];
   userCreatedRooms: IRoom[];
   userJoinedRooms: IRoom[];
@@ -22,6 +23,7 @@ export interface IRoomStore {
   getRoomsCreatedByUser: () => Promise<boolean>;
   getRoomsJoinedByUser: () => Promise<boolean>;
   getAllRooms: () => Promise<boolean>;
+  joinPublicRoom: (roomId: string) => Promise<boolean>;
 }
 
 export const useRoomStore = create<IRoomStore>((set, get) => ({
@@ -29,6 +31,7 @@ export const useRoomStore = create<IRoomStore>((set, get) => ({
   isGettingRoomsCreatedByUser: false,
   isGettingRoomsJoinedByUser: false,
   isGettingAllRooms: false,
+  isJoiningPublicRoom: false,
   rooms: [],
   userCreatedRooms: [],
   userJoinedRooms: [],
@@ -212,4 +215,43 @@ export const useRoomStore = create<IRoomStore>((set, get) => ({
       set({ isGettingAllRooms: false });
     }
   },
+
+  joinPublicRoom: async (roomId) => {
+    set({ isJoiningPublicRoom: true });
+    try {
+      const response = await syncapi.post(`/room/join-public/${roomId}`);
+      if (!response.data.success) {
+        toast.error(response.data.message || "Something went wrong", {
+          style: {
+            borderRadius: "10px",
+            background: "#ec4899",
+            color: "white",
+          },
+        });
+        set({ isJoiningPublicRoom: false });
+        return false;
+      }
+      set({ isJoiningPublicRoom: false, userJoinedRooms: [...get().userJoinedRooms, response.data.room] });
+      return true;
+    } catch (error) {
+      console.error(error);
+      set({ isJoiningPublicRoom: false });
+      const axiosError = error as {
+        response?: { data?: { message?: string } };
+      };
+      toast.error(
+        axiosError.response?.data?.message || "Something went wrong",
+        {
+          style: {
+            borderRadius: "10px",
+            background: "#ec4899",
+            color: "white",
+          },
+        }
+      );
+      return false;
+    } finally {
+      set({ isJoiningPublicRoom: false });
+    }
+  }
 }));

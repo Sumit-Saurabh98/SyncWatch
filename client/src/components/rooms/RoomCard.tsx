@@ -20,6 +20,9 @@ import {
 } from "lucide-react";
 import { IRoom } from "@/utils/interfaces";
 import { useAuthStore } from "@/stores/useAuthStore";
+import RoomJoinDialog from "./JoinRoomDialong";
+import { useRoomStore } from "@/stores/useRoomStore";
+import { BeatLoader } from "react-spinners";
 
 interface RoomCardProps {
   room: IRoom;
@@ -28,7 +31,21 @@ interface RoomCardProps {
 const RoomCard: React.FC<RoomCardProps> = ({ room }) => {
   const [isNameExpanded, setIsNameExpanded] = useState(false);
   const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
+  const [isOpen, setIsOpen] = useState<boolean>(false);
   const {user} = useAuthStore()
+  const {joinPublicRoom, isJoiningPublicRoom} = useRoomStore();
+
+  const handleJoinRoom = async() =>{
+    if(isJoiningPublicRoom) return;
+    const res = await joinPublicRoom(room._id);
+    if(res){
+      setIsOpen(false);
+    }
+  }
+
+  const onOpenChange = (open: boolean) => {
+    setIsOpen(open);
+  };
 
   const formatDateTime = (dateString: string) => {
     const date = new Date(dateString);
@@ -67,8 +84,8 @@ const RoomCard: React.FC<RoomCardProps> = ({ room }) => {
               variant="outline"
               className={
                 room.isLive
-                  ? "bg-red-500/20 text-red-300 border-red-500/50"
-                  : "bg-gray-600/20 text-gray-300 border-gray-500/50"
+                  ? "bg-red-500/80 text-white border-red-500/50"
+                  : "bg-gray-600/80 text-gray-200 border-gray-500/50"
               }
             >
               {room.isLive ? <Zap className="h-4 w-4 mr-1" /> : <Clock className="h-4 w-4 mr-1" />}
@@ -76,7 +93,7 @@ const RoomCard: React.FC<RoomCardProps> = ({ room }) => {
             </Badge>
             <Badge
               variant="outline"
-              className="bg-indigo-500/20 text-indigo-300 border-indigo-500/50"
+              className="bg-indigo-500/80 text-indigo-100 border-indigo-500/80"
             >
               {room.isPrivate ? <Lock className="h-4 w-4 mr-1" /> : <Globe className="h-4 w-4 mr-1" />}
               {room.isPrivate ? "PRIVATE" : "PUBLIC"}
@@ -132,24 +149,45 @@ const RoomCard: React.FC<RoomCardProps> = ({ room }) => {
           </div>
 
           {
-            user?._id !== room.createdBy._id ? (
+            user?._id !== room.createdBy._id && !user?.joinedRooms.includes(room._id) && (
               <Button 
+            onClick={() => setIsOpen(true)}
             className="mt-auto w-full bg-pink-500/20 border-2 border-pink-500/50 text-white hover:bg-pink-500/30 transition-all flex items-center justify-center"
           >
             <Play className="mr-2 h-4 w-4 text-pink-400" />
-            Join Room
+            {isJoiningPublicRoom ? <BeatLoader color="white" size={8} /> : "Join room"}
           </Button>
-            ) : (
+            ) 
+          }
+          {
+            user?._id === room.createdBy._id && (
               <Button 
             className="mt-auto w-full bg-pink-500/20 border-2 border-pink-500/50 text-white hover:bg-pink-500/30 transition-all flex items-center justify-center"
           >
             <Edit className="mr-2 h-4 w-4 text-pink-400" />
-            Edit
+            Edit room
+          </Button>
+            )
+          }
+
+          {
+            user?.joinedRooms.includes(room._id) && user?._id !== room.createdBy._id && (
+              <Button 
+            className="mt-auto w-full bg-pink-500/20 border-2 border-pink-500/50 text-white hover:bg-pink-500/30 transition-all flex items-center justify-center"
+          >
+            <Play className="mr-2 h-4 w-4 text-pink-400" />
+            Open room
           </Button>
             )
           }
         </CardContent>
       </Card>
+      <RoomJoinDialog
+        room={room}
+        isOpen={isOpen}
+        onOpenChange={onOpenChange}
+        onJoin={handleJoinRoom}
+      />
     </motion.div>
   );
 };
