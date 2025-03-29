@@ -20,6 +20,7 @@ export interface IRoom {
   description: string;
   videoUrl: string;
   thumbnailUrl: string;
+  videoId: string;
   createdBy: {
     _id: string;
     name: string;

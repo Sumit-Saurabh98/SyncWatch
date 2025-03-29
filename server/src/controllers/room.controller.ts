@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import Room from "../models/room.model.js";
 import User from "../models/user.model.js";
 import { thumbnailGenerator } from "../utils/thumbnailGenerator.js";
+import { videoIdExtractor } from "../utils/videoIdExtractor.js";
 
 export const createRoom = async (req: Request, res: Response): Promise<void> => {
     const {name, description, videoUrl, category, startDateTime} = req.body;
@@ -19,7 +20,8 @@ export const createRoom = async (req: Request, res: Response): Promise<void> => 
             return;
         }
         const {maxResolution} = thumbnailGenerator(videoUrl);
-        const room = await Room.create({name, description, videoUrl, thumbnailUrl: maxResolution, category, startDateTime, createdBy: req.user._id, participants: [{userId:req.user._id, role: 'host'}]});
+        const videoId = videoIdExtractor(videoUrl);
+        const room = await Room.create({name, description, videoUrl, thumbnailUrl: maxResolution, videoId, category, startDateTime, createdBy: req.user._id, participants: [{userId:req.user._id, role: 'host'}]});
 
         const user = await User.findById(req.user._id);
 

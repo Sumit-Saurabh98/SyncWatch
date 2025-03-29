@@ -19,6 +19,10 @@ const roomSchema = new mongoose.Schema(
       type: String,
       default: "",
     },
+    videoId: {
+      type: String,
+      default: "",
+    },
     createdBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",

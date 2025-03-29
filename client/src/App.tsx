@@ -11,6 +11,7 @@ import Profilepage from "./pages/Profilepage";
 import NotificationPage from "./pages/NotificationPage";
 import VerificationPage from "./pages/VerificationPage";
 import ForgotPassword from "./pages/ForgotPassword";
+import SingleRoomPage from "./pages/SingleRoomPage";
 
 
 
@@ -32,10 +33,11 @@ function App() {
       <Route path="/register" element={!user ? <Registerpage /> : <Navigate to={"/"}/>} />
       <Route path="/login" element={!user ? <Loginpage /> : <Navigate to={"/"} />} />
       <Route path="/rooms" element={user ? <Roompage /> : <Navigate to={"/login"} />} />
-      <Route path="profile/:_id" element={user ? <Profilepage /> : <Navigate to={"/login"} />} />
-      <Route path="notifications" element={user ? <NotificationPage /> : <Navigate to={"/login"} />} />
+      <Route path="/profile/:_id" element={user ? <Profilepage /> : <Navigate to={"/login"} />} />
+      <Route path="/notifications" element={user ? <NotificationPage /> : <Navigate to={"/login"} />} />
       <Route path="/verification" element={!user ? <VerificationPage /> : <Navigate to={"/"} />} />
       <Route path="/forgotpassword" element={<ForgotPassword/>} />
+      <Route path="/room/:_id" element={user ? <SingleRoomPage /> : <Navigate to={"/login"} />} />
     </Routes>
     <ToastContainer
       position="top-center"

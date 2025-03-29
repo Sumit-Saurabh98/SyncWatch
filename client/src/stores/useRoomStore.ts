@@ -9,10 +9,12 @@ export interface IRoomStore {
   isGettingRoomsJoinedByUser: boolean;
   isGettingAllRooms: boolean;
   isJoiningPublicRoom: boolean;
+  isGettingRoomById: boolean;
   rooms: IRoom[];
   userCreatedRooms: IRoom[];
   userJoinedRooms: IRoom[];
   trendingRooms: IRoom[];
+  singleRoom: IRoom[];
   createRoom: (
     name: string,
     description: string,
@@ -24,6 +26,7 @@ export interface IRoomStore {
   getRoomsJoinedByUser: () => Promise<boolean>;
   getAllRooms: () => Promise<boolean>;
   joinPublicRoom: (roomId: string) => Promise<boolean>;
+  getRoomById: (roomId: string) => Promise<boolean>;
 }
 
 export const useRoomStore = create<IRoomStore>((set, get) => ({
@@ -32,10 +35,12 @@ export const useRoomStore = create<IRoomStore>((set, get) => ({
   isGettingRoomsJoinedByUser: false,
   isGettingAllRooms: false,
   isJoiningPublicRoom: false,
+  isGettingRoomById: false,
   rooms: [],
   userCreatedRooms: [],
   userJoinedRooms: [],
   trendingRooms: [],
+  singleRoom: [],
 
   createRoom: async (name, description, videoUrl, category, startDateTime) => {
     set({ isCreatingRoom: true });
@@ -65,7 +70,11 @@ export const useRoomStore = create<IRoomStore>((set, get) => ({
           color: "white",
         },
       });
-      set({ rooms: [...get().rooms, response.data.room], isCreatingRoom: false, userCreatedRooms: [...get().userCreatedRooms, response.data.room] });
+      set({
+        rooms: [...get().rooms, response.data.room],
+        isCreatingRoom: false,
+        userCreatedRooms: [...get().userCreatedRooms, response.data.room],
+      });
       return true;
     } catch (error) {
       console.error(error);
@@ -191,7 +200,7 @@ export const useRoomStore = create<IRoomStore>((set, get) => ({
       set({ rooms: response.data.rooms, isGettingAllRooms: false });
       const trendingRooms = response.data.rooms.filter(
         (room: IRoom) => room.isLive === true
-      )
+      );
       set({ trendingRooms });
       return true;
     } catch (error) {
@@ -231,7 +240,10 @@ export const useRoomStore = create<IRoomStore>((set, get) => ({
         set({ isJoiningPublicRoom: false });
         return false;
       }
-      set({ isJoiningPublicRoom: false, userJoinedRooms: [...get().userJoinedRooms, response.data.room] });
+      set({
+        isJoiningPublicRoom: false,
+        userJoinedRooms: [...get().userJoinedRooms, response.data.room],
+      });
       return true;
     } catch (error) {
       console.error(error);
@@ -253,5 +265,47 @@ export const useRoomStore = create<IRoomStore>((set, get) => ({
     } finally {
       set({ isJoiningPublicRoom: false });
     }
-  }
+  },
+
+  getRoomById: async (roomId) => {
+    set({ isGettingRoomById: true });
+    try {
+      const response = await syncapi.get(`/room/${roomId}`);
+      if (!response.data.success) {
+        toast.error(response.data.message || "Something went wrong", {
+          style: {
+            borderRadius: "10px",
+            background: "#ec4899",
+            color: "white",
+          },
+        });
+        set({ isGettingRoomById: false });
+        return false;
+      }
+      set({
+        singleRoom: [response.data.room],
+        isGettingRoomById: false,
+      });
+      return true;
+    } catch (error) {
+      console.error(error);
+      set({ isGettingRoomById: false });
+      const axiosError = error as {
+        response?: { data?: { message?: string } };
+      };
+      toast.error(
+        axiosError.response?.data?.message || "Something went wrong",
+        {
+          style: {
+            borderRadius: "10px",
+            background: "#ec4899",
+            color: "white",
+          },
+        }
+      );
+      return false;
+    } finally {
+      set({ isGettingRoomById: false });
+    }
+  },
 }));

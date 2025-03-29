@@ -1,9 +1,6 @@
 import React, { useState } from "react";
 import { motion } from "framer-motion";
-import {
-  Card,
-  CardContent
-} from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
@@ -16,13 +13,14 @@ import {
   Clock,
   ChevronDown,
   ChevronUp,
-  Edit
+  Edit,
 } from "lucide-react";
 import { IRoom } from "@/utils/interfaces";
 import { useAuthStore } from "@/stores/useAuthStore";
 import RoomJoinDialog from "./JoinRoomDialong";
 import { useRoomStore } from "@/stores/useRoomStore";
 import { BeatLoader } from "react-spinners";
+import { Link } from "react-router-dom";
 
 interface RoomCardProps {
   room: IRoom;
@@ -32,16 +30,16 @@ const RoomCard: React.FC<RoomCardProps> = ({ room }) => {
   const [isNameExpanded, setIsNameExpanded] = useState(false);
   const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
   const [isOpen, setIsOpen] = useState<boolean>(false);
-  const {user} = useAuthStore()
-  const {joinPublicRoom, isJoiningPublicRoom} = useRoomStore();
+  const { user } = useAuthStore();
+  const { joinPublicRoom, isJoiningPublicRoom } = useRoomStore();
 
-  const handleJoinRoom = async() =>{
-    if(isJoiningPublicRoom) return;
+  const handleJoinRoom = async () => {
+    if (isJoiningPublicRoom) return;
     const res = await joinPublicRoom(room._id);
-    if(res){
+    if (res) {
       setIsOpen(false);
     }
-  }
+  };
 
   const onOpenChange = (open: boolean) => {
     setIsOpen(open);
@@ -53,21 +51,25 @@ const RoomCard: React.FC<RoomCardProps> = ({ room }) => {
       month: "short",
       day: "numeric",
       hour: "2-digit",
-      minute: "2-digit"
+      minute: "2-digit",
     });
   };
 
-  const truncateText = (text: string, maxLength: number, isExpanded: boolean) => {
+  const truncateText = (
+    text: string,
+    maxLength: number,
+    isExpanded: boolean
+  ) => {
     if (isExpanded) return text;
-    return text.length > maxLength 
-      ? text.slice(0, maxLength).trim() + "..." 
+    return text.length > maxLength
+      ? text.slice(0, maxLength).trim() + "..."
       : text;
   };
 
   return (
     <motion.div
       className="w-full h-full"
-    //   whileHover={{ scale: 1.03 }}
+      //   whileHover={{ scale: 1.03 }}
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
@@ -88,14 +90,22 @@ const RoomCard: React.FC<RoomCardProps> = ({ room }) => {
                   : "bg-gray-600/80 text-gray-200 border-gray-500/50"
               }
             >
-              {room.isLive ? <Zap className="h-4 w-4 mr-1" /> : <Clock className="h-4 w-4 mr-1" />}
+              {room.isLive ? (
+                <Zap className="h-4 w-4 mr-1" />
+              ) : (
+                <Clock className="h-4 w-4 mr-1" />
+              )}
               {room.isLive ? "LIVE" : "UPCOMING"}
             </Badge>
             <Badge
               variant="outline"
               className="bg-indigo-500/80 text-indigo-100 border-indigo-500/80"
             >
-              {room.isPrivate ? <Lock className="h-4 w-4 mr-1" /> : <Globe className="h-4 w-4 mr-1" />}
+              {room.isPrivate ? (
+                <Lock className="h-4 w-4 mr-1" />
+              ) : (
+                <Globe className="h-4 w-4 mr-1" />
+              )}
               {room.isPrivate ? "PRIVATE" : "PUBLIC"}
             </Badge>
           </div>
@@ -107,9 +117,9 @@ const RoomCard: React.FC<RoomCardProps> = ({ room }) => {
               {truncateText(room.name, 50, isNameExpanded)}
             </h3>
             {room.name.length > 50 && (
-              <Button 
-                variant="ghost" 
-                size="sm" 
+              <Button
+                variant="ghost"
+                size="sm"
                 onClick={() => setIsNameExpanded(!isNameExpanded)}
                 className="ml-2"
               >
@@ -123,13 +133,17 @@ const RoomCard: React.FC<RoomCardProps> = ({ room }) => {
           </div>
 
           <div className="mb-4">
-            <p className={`text-gray-300 text-sm ${!isDescriptionExpanded ? 'line-clamp-2' : ''}`}>
+            <p
+              className={`text-gray-300 text-sm ${
+                !isDescriptionExpanded ? "line-clamp-2" : ""
+              }`}
+            >
               {truncateText(room.description, 100, isDescriptionExpanded)}
             </p>
             {room.description.length > 100 && (
-              <Button 
-                variant="ghost" 
-                size="sm" 
+              <Button
+                variant="ghost"
+                size="sm"
                 onClick={() => setIsDescriptionExpanded(!isDescriptionExpanded)}
                 className="mt-1 text-pink-400 hover:text-pink-300"
               >
@@ -148,38 +162,36 @@ const RoomCard: React.FC<RoomCardProps> = ({ room }) => {
             <span>{formatDateTime(room.startDateTime)}</span>
           </div>
 
-          {
-            user?._id !== room.createdBy._id && !user?.joinedRooms.includes(room._id) && (
-              <Button 
-            onClick={() => setIsOpen(true)}
-            className="mt-auto w-full bg-pink-500/20 border-2 border-pink-500/50 text-white hover:bg-pink-500/30 transition-all flex items-center justify-center"
-          >
-            <Play className="mr-2 h-4 w-4 text-pink-400" />
-            {isJoiningPublicRoom ? <BeatLoader color="white" size={8} /> : "Join room"}
-          </Button>
-            ) 
-          }
-          {
-            user?._id === room.createdBy._id && (
-              <Button 
-            className="mt-auto w-full bg-pink-500/20 border-2 border-pink-500/50 text-white hover:bg-pink-500/30 transition-all flex items-center justify-center"
-          >
-            <Edit className="mr-2 h-4 w-4 text-pink-400" />
-            Edit room
-          </Button>
-            )
-          }
+          {user?._id !== room.createdBy._id &&
+            !user?.joinedRooms.includes(room._id) && (
+              <Button
+                onClick={() => setIsOpen(true)}
+                className="mt-auto w-full bg-pink-500/20 border-2 border-pink-500/50 text-white hover:bg-pink-500/30 transition-all flex items-center justify-center"
+              >
+                <Play className="mr-2 h-4 w-4 text-pink-400" />
+                {isJoiningPublicRoom ? (
+                  <BeatLoader color="white" size={8} />
+                ) : (
+                  "Join room"
+                )}
+              </Button>
+            )}
+          {user?._id === room.createdBy._id && (
+            <Button className="mt-auto w-full bg-pink-500/20 border-2 border-pink-500/50 text-white hover:bg-pink-500/30 transition-all flex items-center justify-center">
+              <Edit className="mr-2 h-4 w-4 text-pink-400" />
+              Edit room
+            </Button>
+          )}
 
-          {
-            user?.joinedRooms.includes(room._id) && user?._id !== room.createdBy._id && (
-              <Button 
-            className="mt-auto w-full bg-pink-500/20 border-2 border-pink-500/50 text-white hover:bg-pink-500/30 transition-all flex items-center justify-center"
-          >
-            <Play className="mr-2 h-4 w-4 text-pink-400" />
-            Open room
-          </Button>
-            )
-          }
+          {user?.joinedRooms.includes(room._id) &&
+            user?._id !== room.createdBy._id && (
+              <Link to={`/room/${room._id}`}>
+                <Button className="mt-auto w-full bg-pink-500/20 border-2 border-pink-500/50 text-white hover:bg-pink-500/30 transition-all flex items-center justify-center">
+                  <Play className="mr-2 h-4 w-4 text-pink-400" />
+                  Open room
+                </Button>
+              </Link>
+            )}
         </CardContent>
       </Card>
       <RoomJoinDialog
