@@ -21,6 +21,7 @@ export interface IRoom {
   videoUrl: string;
   thumbnailUrl: string;
   videoId: string;
+  messages: IMessage[];
   createdBy: {
     _id: string;
     name: string;
@@ -37,4 +38,17 @@ export interface IRoom {
   }[];
   createdAt: Date;
   updatedAt: Date;
+}
+
+export interface IMessage {
+  _id?: string;
+  sender: {
+    _id: string;
+    name: string;
+    profilePicture: string;
+  };
+  message: string;
+  roomId: string;
+  createdAt?: Date;
+  updatedAt?: Date;
 }

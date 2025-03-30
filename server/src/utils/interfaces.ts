@@ -25,6 +25,7 @@ export interface IRoom {
   thumbnailUrl: string;
   isActive: boolean;
   isLive: boolean;
+  messages: string[];
   videoId: string;
   participants: IParticipant[];
   videoState: {

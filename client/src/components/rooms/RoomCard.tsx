@@ -12,8 +12,7 @@ import {
   Lock,
   Clock,
   ChevronDown,
-  ChevronUp,
-  Edit,
+  ChevronUp
 } from "lucide-react";
 import { IRoom } from "@/utils/interfaces";
 import { useAuthStore } from "@/stores/useAuthStore";
@@ -177,10 +176,12 @@ const RoomCard: React.FC<RoomCardProps> = ({ room }) => {
               </Button>
             )}
           {user?._id === room.createdBy._id && (
+            <Link to={`/room/${room._id}`}>
             <Button className="mt-auto w-full bg-pink-500/20 border-2 border-pink-500/50 text-white hover:bg-pink-500/30 transition-all flex items-center justify-center">
-              <Edit className="mr-2 h-4 w-4 text-pink-400" />
-              Edit room
+              <Play className="mr-2 h-4 w-4 text-pink-400" />
+              Open room
             </Button>
+          </Link>
           )}
 
           {user?.joinedRooms.includes(room._id) &&

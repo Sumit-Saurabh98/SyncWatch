@@ -23,6 +23,12 @@ const roomSchema = new mongoose.Schema(
       type: String,
       default: "",
     },
+    messages: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Message",
+      }
+    ],
     createdBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",

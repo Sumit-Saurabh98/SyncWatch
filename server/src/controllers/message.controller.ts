@@ -5,7 +5,8 @@ import Message from "../models/message.schema.js";
 import Room from "../models/room.model.js";
 
 export const sendMessage = async (req: Request, res: Response): Promise<void> => {
-    const {roomId, message} = req.body;
+    const {message} = req.body;
+    const {roomId} = req.params
 
     if(!roomId || !message) {
         res.status(400).json({success: false, message: "Room id and message are required"});
@@ -30,6 +31,14 @@ export const sendMessage = async (req: Request, res: Response): Promise<void> =>
 
         const newMessage = await Message.create({roomId, message, sender: req.user._id});
 
+        if(!newMessage) {
+            res.status(400).json({success: false, message: "Message not created"});
+            return;
+        }
+
+        room.messages.push(newMessage._id);
+        await room.save();
+
         res.status(201).json({success: true, message: "Message created successfully", newMessage});
     } catch (error) {
         console.log(error);
@@ -39,6 +48,7 @@ export const sendMessage = async (req: Request, res: Response): Promise<void> =>
 
 export const getAllMessagesForARoom = async (req: Request, res: Response): Promise<void> => {
     const {roomId} = req.params
+    console.log(roomId, "arre baba->");
 
 
     if(!roomId) {
@@ -47,7 +57,7 @@ export const getAllMessagesForARoom = async (req: Request, res: Response): Promi
     }
 
     try {
-        const messages = await Message.find({roomId}).populate('user', 'sender').sort({createdAt: -1});
+        const messages = await Message.find({roomId}).populate('sender', 'name profilePicture').sort({createdAt: 1});
         res.status(200).json({success: true, message: "Messages fetched successfully", messages});
     } catch (error) {
         console.log(error);

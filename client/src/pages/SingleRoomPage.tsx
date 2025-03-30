@@ -18,6 +18,9 @@ import {
 import { Captions } from "lucide-react";
 import LoadingPage from "@/components/LoadingPage";
 import Chat from "@/components/rooms/Chat";
+import { useMessageStore } from "@/stores/useMessageStore";
+import { useAuthStore } from "@/stores/useAuthStore";
+import { BeatLoader } from "react-spinners";
 
 declare global {
   interface Window {
@@ -31,6 +34,8 @@ const SingleRoomPage = () => {
   const emojiPickerRef = useRef<HTMLDivElement>(null);
   const [showEmojiPicker, setShowEmojiPicker] = useState<boolean>(false);
   const { _id } = useParams<{ _id: string }>();
+  const {user} = useAuthStore();
+  const {sendMessages, isSendingMessages} = useMessageStore();
   const {
     isGettingRoomById,
     singleRoom,
@@ -158,10 +163,11 @@ const SingleRoomPage = () => {
     isLive,
   } = singleRoom[0];
 
-  const handleSendMessage = (e: React.FormEvent) => {
+  const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
     if (message.trim()) {
-      console.log("Sending message:", message);
+      if(!user) return;
+      await sendMessages(message, _id as string);
       setMessage("");
     }
   };
@@ -312,7 +318,8 @@ const SingleRoomPage = () => {
               <div className="flex-1 overflow-y-auto p-4">
                 <Chat 
                   setShowEmojiPicker={setShowEmojiPicker} 
-                  emojiPickerRef={emojiPickerRef} 
+                  emojiPickerRef={emojiPickerRef!} 
+                  roomId={_id as string}
                 />
               </div>
               
@@ -340,7 +347,13 @@ const SingleRoomPage = () => {
                     type="submit"
                     className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 border-0 rounded-full p-1 h-8 w-8"
                   >
-                    <Send size={18} />
+                    {
+                      isSendingMessages ? (
+                        <BeatLoader color="white" size={10} className="h-5 w-5 text-white" />
+                      ) : (
+                        <Send className="h-5 w-5 text-white" />
+                      )
+                    }
                   </Button>
                   
                   {showEmojiPicker && (

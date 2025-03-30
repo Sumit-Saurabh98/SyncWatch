@@ -4,7 +4,7 @@ import { sendMessage, getAllMessagesForARoom } from "../controllers/message.cont
 
 const router = express.Router();
 
-router.post('/send', authMiddleware, sendMessage);
+router.post('/send/:roomId', authMiddleware, sendMessage);
 router.get('/:roomId', authMiddleware, getAllMessagesForARoom);
 
 
