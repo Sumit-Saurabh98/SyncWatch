@@ -12,6 +12,7 @@ import NotificationPage from "./pages/NotificationPage";
 import VerificationPage from "./pages/VerificationPage";
 import ForgotPassword from "./pages/ForgotPassword";
 import SingleRoomPage from "./pages/SingleRoomPage";
+import Chat from "./components/rooms/Chat";
 
 
 

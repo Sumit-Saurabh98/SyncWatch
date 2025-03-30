@@ -47,7 +47,7 @@ export const getAllMessagesForARoom = async (req: Request, res: Response): Promi
     }
 
     try {
-        const messages = await Message.find({roomId}).populate('user', 'sender');
+        const messages = await Message.find({roomId}).populate('user', 'sender').sort({createdAt: -1});
         res.status(200).json({success: true, message: "Messages fetched successfully", messages});
     } catch (error) {
         console.log(error);
