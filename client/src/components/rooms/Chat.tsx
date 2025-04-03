@@ -12,12 +12,15 @@ interface ChatProps {
 const Chat = ({setShowEmojiPicker, emojiPickerRef, roomId}: ChatProps) => {
   const {user} = useAuthStore();
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const {messages, getMessages, isGettingMessages} = useMessageStore();
+  const {messages, getMessages, isGettingMessages, subscribeToMessages, unsubscribeFromMessages} = useMessageStore();
 
   useEffect(() => {
-   const res = getMessages(roomId);
-   console.log(res);
-   console.log("what is response")
+   getMessages(roomId);
+   subscribeToMessages()
+  
+   return () =>{
+    unsubscribeFromMessages()
+   }
   }, [getMessages])
 
   console.log(messages, roomId, "this is from Chat messages");
@@ -72,7 +75,7 @@ const Chat = ({setShowEmojiPicker, emojiPickerRef, roomId}: ChatProps) => {
               <div className="chat-image avatar">
                 <Avatar>
                   <AvatarImage src={`${msg.sender.profilePicture}`} />
-                  <AvatarFallback>{msg.sender.name.substring(0, 2).toUpperCase()}</AvatarFallback>
+                  <AvatarFallback>{msg.sender.name.split(" ")[0]?.charAt(0)}</AvatarFallback>
                 </Avatar>
               </div>
               <div className="chat-header">

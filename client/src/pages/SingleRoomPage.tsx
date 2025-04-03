@@ -21,6 +21,7 @@ import Chat from "@/components/rooms/Chat";
 import { useMessageStore } from "@/stores/useMessageStore";
 import { useAuthStore } from "@/stores/useAuthStore";
 import { BeatLoader } from "react-spinners";
+import { getSocket } from "@/socket/socket.client";
 
 declare global {
   interface Window {
@@ -39,13 +40,22 @@ const SingleRoomPage = () => {
   const {
     isGettingRoomById,
     singleRoom,
-    getRoomById,
+    getRoomById
   } = useRoomStore();
   const [showChat, setShowChat] = useState(true);
   const [isPlaying, setIsPlaying] = useState(false);
   const [player, setPlayer] = useState<any>(null);
   const playerRef = useRef<any>(null);
   const [captionsOn, setCaptionsOn] = useState(false);
+
+  useEffect(() => {
+    const socket = getSocket();
+    socket.emit("join_room", _id as string)
+
+    return () =>{
+      socket.off("join_room")
+    }
+  }, [_id])
 
   const initializeYoutubePlayer = useCallback((videoId: string) => {
     if (window.YT && window.YT.Player) {

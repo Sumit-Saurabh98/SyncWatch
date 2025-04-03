@@ -10,20 +10,24 @@ import userRoutes from "./routes/user.route.js"
 import roomRoutes from "./routes/room.route.js"
 import messageRoutes from "./routes/message.route.js"
 import connectDB from "./config/db.js";
+import { createServer } from "http";
+import { initializeSocket } from "./socket/socket.client.js";
 
+const PORT = process.env.PORT || 5001;
 dotenv.config();
 
-
 const app: Application = express();
-const PORT = process.env.PORT || 5001;
+const server = createServer(app);
+
+initializeSocket(server);
 
 app.use(express.json({limit: '10mb'}));
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(
     cors({
-        origin: process.env.CLIENT_URL, // Ensure this is correct
-        credentials: true, // Allow cookies to be sent
+        origin: process.env.CLIENT_URL,
+        credentials: true,
     })
 );
 
@@ -56,10 +60,7 @@ app.use('/api/user', userRoutes);
 app.use('/api/message', messageRoutes);
 app.use('/api/room', roomRoutes);
 
-connectDB().then(() => {
-    app.listen(PORT, () => {
-        console.log(`Listening on port ${PORT}`);
-    });
-}).catch((error) => {
-    console.log(error, "error connecting to database");
+server.listen(PORT, () => {
+	console.log("Server started at this port:" + PORT);
+	connectDB();
 });

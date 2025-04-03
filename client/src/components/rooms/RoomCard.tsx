@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -20,6 +20,7 @@ import RoomJoinDialog from "./JoinRoomDialong";
 import { useRoomStore } from "@/stores/useRoomStore";
 import { BeatLoader } from "react-spinners";
 import { Link } from "react-router-dom";
+import { getSocket } from "@/socket/socket.client";
 
 interface RoomCardProps {
   room: IRoom;
@@ -39,6 +40,17 @@ const RoomCard: React.FC<RoomCardProps> = ({ room }) => {
       setIsOpen(false);
     }
   };
+
+  const handleSocketRoomJoin = () =>{
+    useEffect(() =>{
+      const socket = getSocket();
+      socket.emit("joinRoom", room._id);
+  
+      return () => {
+        socket.emit("leaveRoom", room._id);
+      }
+    }, [])
+  }
 
   const onOpenChange = (open: boolean) => {
     setIsOpen(open);
@@ -177,7 +189,9 @@ const RoomCard: React.FC<RoomCardProps> = ({ room }) => {
             )}
           {user?._id === room.createdBy._id && (
             <Link to={`/room/${room._id}`}>
-            <Button className="mt-auto w-full bg-pink-500/20 border-2 border-pink-500/50 text-white hover:bg-pink-500/30 transition-all flex items-center justify-center">
+            <Button className="mt-auto w-full bg-pink-500/20 border-2 border-pink-500/50 text-white hover:bg-pink-500/30 transition-all flex items-center justify-center"
+            onClick={handleSocketRoomJoin}
+            >
               <Play className="mr-2 h-4 w-4 text-pink-400" />
               Open room
             </Button>
@@ -187,7 +201,9 @@ const RoomCard: React.FC<RoomCardProps> = ({ room }) => {
           {user?.joinedRooms.includes(room._id) &&
             user?._id !== room.createdBy._id && (
               <Link to={`/room/${room._id}`}>
-                <Button className="mt-auto w-full bg-pink-500/20 border-2 border-pink-500/50 text-white hover:bg-pink-500/30 transition-all flex items-center justify-center">
+                <Button className="mt-auto w-full 
+                bg-pink-500/20 border-2 border-pink-500/50 text-white hover:bg-pink-500/30 transition-all flex items-center justify-center"
+                >
                   <Play className="mr-2 h-4 w-4 text-pink-400" />
                   Open room
                 </Button>

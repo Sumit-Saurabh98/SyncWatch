@@ -2,6 +2,7 @@ import { create } from "zustand";
 import { IUser } from "@/utils/interfaces.js";
 import syncapi from "@/utils/axios.js";
 import {toast} from "react-toastify"
+import { disconnectSocket, initializeSocket } from "@/socket/socket.client";
 export interface IAuthStore {
   user: IUser | null;
   signUpLoading: boolean;
@@ -169,6 +170,8 @@ export const useAuthStore = create<IAuthStore>((set, get) => ({
         }
       });
 
+      initializeSocket(response.data.user._id);
+
       return false;
     } catch (error) {
       console.error(error);
@@ -196,6 +199,7 @@ export const useAuthStore = create<IAuthStore>((set, get) => ({
     try {
       await syncapi.post("/auth/logout");
       set({ user: null });
+      disconnectSocket();
     } catch (error: unknown) {
       console.error(error);
       set({ loginLoading: false });
@@ -226,6 +230,7 @@ export const useAuthStore = create<IAuthStore>((set, get) => ({
         checkingAuth: false,
         checkAuthLoading: false,
       });
+      initializeSocket(response.data.user._id);
     } catch (error) {
       console.error("Auth error:", error);
       set({ user: null, checkingAuth: false, checkAuthLoading: false });
@@ -259,6 +264,7 @@ export const useAuthStore = create<IAuthStore>((set, get) => ({
           color: "white",
         }
       });
+      initializeSocket(response.data.user._id);
       return true
     } catch (error) {
       console.error(error);

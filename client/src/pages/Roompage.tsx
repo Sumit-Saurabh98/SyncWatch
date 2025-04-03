@@ -33,7 +33,7 @@ import RoomNavbar from "@/components/rooms/RoomNavbar";
 import { useRoomStore } from "@/stores/useRoomStore";
 import { categories } from "../utils/category";
 
-const RoomsPage: React.FC = () => {
+const RoomsPage = () => {
   const {
     rooms,
     userCreatedRooms,

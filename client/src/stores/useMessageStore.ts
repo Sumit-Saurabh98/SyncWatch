@@ -1,6 +1,8 @@
 import syncapi from "@/utils/axios";
 import { IMessage } from "@/utils/interfaces";
 import { create } from "zustand";
+import { useAuthStore } from "./useAuthStore";
+import { getSocket } from "@/socket/socket.client";
 
 export interface IMessageStore {
   isSendingMessages: boolean;
@@ -8,6 +10,8 @@ export interface IMessageStore {
   messages: IMessage[];
   sendMessages: (message: string, roomId: string) => Promise<boolean>;
   getMessages: (roomId: string) => Promise<boolean>;
+  subscribeToMessages: () => Promise<void>
+  unsubscribeFromMessages: () => Promise<void>
 }
 
 export const useMessageStore = create<IMessageStore>((set, get) => ({
@@ -18,6 +22,18 @@ export const useMessageStore = create<IMessageStore>((set, get) => ({
   sendMessages: async (message, roomId) => {
     set({ isSendingMessages: false });
     try {
+      // set(state => ({
+      //   messages: [...state.messages, {
+      //     _id: String(Date.now()), 
+      //     sender: {
+      //       _id: useAuthStore.getState().user?._id || "",
+      //       name: useAuthStore.getState().user?.name || "",
+      //       profilePicture: useAuthStore.getState().user?.profilePicture || ""
+      //     },
+      //     roomId: roomId,
+      //     message: message
+      //   }]
+      // }))
       const response = await syncapi.post(`/message/send/${roomId}`, { message });
 
       if (!response.data.success) {
@@ -53,5 +69,17 @@ export const useMessageStore = create<IMessageStore>((set, get) => ({
     } finally {
       set({ isGettingMessages: false });
     }
+  },
+
+  subscribeToMessages: async () =>{
+    const socket = getSocket();
+    socket.on("new_message", (message) => {
+      set((state) => ({ messages: [...state.messages, message] }))
+    })
+  },
+
+  unsubscribeFromMessages: async () =>{
+    const socket = getSocket();
+    socket.off("new_message");
   }
 }));
