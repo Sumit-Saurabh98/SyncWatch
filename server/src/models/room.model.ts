@@ -72,18 +72,30 @@ const roomSchema = new mongoose.Schema(
       },
     ],
     videoState: {
-      currentTime: {
-        type: Number,
-        default: 0,
-      },
       isPlaying: {
         type: Boolean,
         default: false,
       },
-      lastUpdated: {
-        type: Date,
-        default: Date.now(),
+      volume: {
+        type: Number,
+        default: 0,
       },
+      isMuted: {
+        type: Boolean,
+        default: false,
+      },
+      playbackRate: {
+        type: Number,
+        default: 1,
+      },
+      subtitles: {
+        type:Boolean,
+        default: false
+      },
+      seekTo: {
+        type: Number,
+        default: 0
+      }
     }
   },
   {

@@ -36,6 +36,14 @@ export interface IRoom {
     userId: string;
     role: string;
   }[];
+  videoState: {
+    isPlaying: boolean;
+    volume: number;
+    isMuted: boolean;
+    playbackRate: number;
+    subtitles: boolean;
+    seekTo: number
+  }
   createdAt: Date;
   updatedAt: Date;
 }
