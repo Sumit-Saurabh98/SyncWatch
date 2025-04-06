@@ -1,5 +1,5 @@
 import express from "express";
-import { createRoom, deleteRoom, getAllRooms, getRoomById, getRoomJoinedByUser, getRoomsCreatedByUser, joinPrivateRoom, joinPublicRoom, leaveRoom, makeRoomPrivate, makeRoomPublic, changeRoomName, changeRoomDescription, changeRoomVideoUrl } from "../controllers/room.controller.js";
+import { createRoom, deleteRoom, getAllRooms, getRoomById, getRoomJoinedByUser, getRoomsCreatedByUser, joinPrivateRoom, joinPublicRoom, leaveRoom, makeRoomPrivate, makeRoomPublic, changeRoomName, changeRoomDescription, changeRoomVideoUrl, changeVideoState } from "../controllers/room.controller.js";
 import authMiddleware from "../middleware/auth.middleware.js";
 import { authorizeMiddleware } from "../middleware/authorize.middleware.js";
 
@@ -19,6 +19,7 @@ router.patch('/name-change/:roomId', authMiddleware, authorizeMiddleware(), chan
 router.patch('/description-change/:roomId', authMiddleware, authorizeMiddleware(), changeRoomDescription);
 router.patch('/video-url-change/:roomId', authMiddleware, authorizeMiddleware(), changeRoomVideoUrl);
 router.delete('/delete/:roomId', authMiddleware, authorizeMiddleware(), deleteRoom);
+router.put('/change-video-state/:roomId', authMiddleware, changeVideoState);
 
 
 

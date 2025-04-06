@@ -454,3 +454,29 @@ export const deleteRoom = async (req: Request, res: Response): Promise<void> => 
         res.status(500).json({success: false, message: "Internal server error"});
     }
 }
+
+export const changeVideoState = async (req: Request, res: Response): Promise<void> => {
+    const {roomId} = req.params;
+    const {isPlaying, playbackRate, seekTo} = req.body;
+
+    if(!roomId) {
+        res.status(400).json({success: false, message: "Room id is required"});
+        return;
+    }
+
+    try {
+        const room = await Room.findById(roomId);
+        if(!room) {
+            res.status(404).json({success: false, message: "Room not found"});
+            return;
+        }
+        room.videoState.isPlaying = isPlaying;
+        room.videoState.playbackRate = playbackRate;
+        room.videoState.seekTo = seekTo;
+        await room.save();
+        res.status(200).json({success: true, message: "Video state changed successfully", room});
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({success: false, message: "Internal server error"});
+    }
+}

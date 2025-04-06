@@ -10,6 +10,7 @@ export interface IRoomStore {
   isGettingAllRooms: boolean;
   isJoiningPublicRoom: boolean;
   isGettingRoomById: boolean;
+  isChangingVideoState:boolean;
   rooms: IRoom[];
   userCreatedRooms: IRoom[];
   userJoinedRooms: IRoom[];
@@ -27,6 +28,7 @@ export interface IRoomStore {
   getAllRooms: () => Promise<boolean>;
   joinPublicRoom: (roomId: string) => Promise<boolean>;
   getRoomById: (roomId: string) => Promise<boolean>;
+  changeVideoState: (roomId: string, isPlaying: boolean, playbackRate: number, seekTo: number) => Promise<boolean>;
 }
 
 export const useRoomStore = create<IRoomStore>((set, get) => ({
@@ -36,11 +38,13 @@ export const useRoomStore = create<IRoomStore>((set, get) => ({
   isGettingAllRooms: false,
   isJoiningPublicRoom: false,
   isGettingRoomById: false,
+  isChangingVideoState:false,
   rooms: [],
   userCreatedRooms: [],
   userJoinedRooms: [],
   trendingRooms: [],
   singleRoom: [],
+  
 
   createRoom: async (name, description, videoUrl, category, startDateTime) => {
     set({ isCreatingRoom: true });
@@ -308,4 +312,49 @@ export const useRoomStore = create<IRoomStore>((set, get) => ({
       set({ isGettingRoomById: false });
     }
   },
+
+  changeVideoState: async (roomId, isPlaying, playbackRate, seekTo) => {
+    set({ isChangingVideoState: true });
+    try {
+      const response = await syncapi.put(`/room/change-video-state/${roomId}`, {
+        isPlaying,
+        playbackRate,
+        seekTo,
+      });
+      if (!response.data.success) {
+        toast.error(response.data.message || "Something went wrong", {
+          style: {
+            borderRadius: "10px",
+            background: "#ec4899",
+            color: "white",
+          },
+        });
+        set({ isChangingVideoState: false });
+        return false;
+      }
+      // api return updatedroom
+      set({singleRoom: [response.data.room]})
+      set({ isChangingVideoState: false });
+      return true;
+    } catch (error) {
+      console.error(error);
+      set({ isChangingVideoState: false });
+      const axiosError = error as {
+        response?: { data?: { message?: string } };
+      };
+      toast.error(
+        axiosError.response?.data?.message || "Something went wrong",
+        {
+          style: {
+            borderRadius: "10px",
+            background: "#ec4899",
+            color: "white",
+          },
+        }
+      );
+      return false;
+    } finally {
+      set({ isChangingVideoState: false });
+    }
+  }
 }));

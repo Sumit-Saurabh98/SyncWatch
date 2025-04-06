@@ -11,14 +11,11 @@ import {
   Send,
   FastForward,
   Rewind,
-  Sliders,
   VolumeX,
   Volume,
   Users,
   Play,
   Pause,
-  SkipForward,
-  SkipBack,
   MessageSquare,
   X,
   Captions,
@@ -53,15 +50,28 @@ const SingleRoomPage = () => {
   // Store hooks
   const { user } = useAuthStore();
   const { sendMessages, isSendingMessages } = useMessageStore();
-  const { isGettingRoomById, singleRoom, getRoomById } = useRoomStore();
+  const { isGettingRoomById, singleRoom, getRoomById, changeVideoState } = useRoomStore();
 
   // Join room socket on component mount
   useEffect(() => {
     const socket = getSocket();
     socket.emit("join_room", _id as string);
 
+    // Listen for video state changes from other users
+    socket.on("video_state_changed", (data) => {
+      if (data.roomId === _id) {
+        setIsPlaying(data.isPlaying);
+        setPlaybackRate(data.playbackRate);
+        if (playerRef.current) {
+          playerRef.current.seekTo(data.seekTo / 100);
+        }
+        setPlayedPercentage(data.seekTo);
+      }
+    });
+
     return () => {
       socket.off("join_room");
+      socket.off("video_state_changed");
     };
   }, [_id]);
 
@@ -69,6 +79,15 @@ const SingleRoomPage = () => {
   useEffect(() => {
     getRoomById(_id as string);
   }, [getRoomById, _id]);
+
+  // Initialize video state from room data
+  useEffect(() => {
+    if (singleRoom && singleRoom[0]) {
+      setIsPlaying(singleRoom[0].videoState.isPlaying);
+      setPlaybackRate(singleRoom[0].videoState.playbackRate);
+      setPlayedPercentage(singleRoom[0].videoState.seekTo);
+    }
+  }, [singleRoom]);
 
   // Close emoji picker when clicking outside
   useEffect(() => {
@@ -99,17 +118,41 @@ const SingleRoomPage = () => {
     }
   };
 
-  // Video player controls
+  // Video player controls with proper changeVideoState calls
+  const handlePlayPause = () => {
+    const newPlayingState = !isPlaying;
+    setIsPlaying(newPlayingState);
+    changeVideoState(_id as string, newPlayingState, playbackRate, playedPercentage);
+  };
+
+  const handlePlaybackRateChange = () => {
+    const newRate = playbackRate === 1 ? 1.5 : 1;
+    setPlaybackRate(newRate);
+    changeVideoState(_id as string, isPlaying, newRate, playedPercentage);
+  };
+
   const handleSeekForward = () => {
     if (!playerRef.current) return;
     const currentTime = playerRef.current.getCurrentTime() || 0;
-    playerRef.current.seekTo(currentTime + 10);
+    const duration = playerRef.current.getDuration() || 1;
+    const newTime = currentTime + 10;
+    const newPercentage = (newTime / duration) * 100;
+    
+    playerRef.current.seekTo(newTime);
+    setPlayedPercentage(newPercentage);
+    changeVideoState(_id as string, isPlaying, playbackRate, newPercentage);
   };
 
   const handleSeekBackward = () => {
     if (!playerRef.current) return;
     const currentTime = playerRef.current.getCurrentTime() || 0;
-    playerRef.current.seekTo(Math.max(0, currentTime - 10));
+    const duration = playerRef.current.getDuration() || 1;
+    const newTime = Math.max(0, currentTime - 10);
+    const newPercentage = (newTime / duration) * 100;
+    
+    playerRef.current.seekTo(newTime);
+    setPlayedPercentage(newPercentage);
+    changeVideoState(_id as string, isPlaying, playbackRate, newPercentage);
   };
 
   const toggleSubtitles = () => {
@@ -243,6 +286,13 @@ const SingleRoomPage = () => {
                 onProgress={(state) => {
                   setPlayedPercentage(state.played * 100);
                 }}
+                onSeek={(seconds) => {
+                  // Calculate percentage based on duration and update
+                  const duration = playerRef.current?.getDuration() || 1;
+                  const newPercentage = (seconds / duration) * 100;
+                  setPlayedPercentage(newPercentage);
+                  changeVideoState(_id as string, isPlaying, playbackRate, newPercentage);
+                }}
                 width="100%"
                 height="100%"
                 style={{
@@ -284,7 +334,7 @@ const SingleRoomPage = () => {
                       variant="ghost"
                       size="sm"
                       className="text-white hover:text-pink-400 hover:bg-transparent p-1"
-                      onClick={() => setIsPlaying(!isPlaying)}
+                      onClick={handlePlayPause}
                     >
                       {isPlaying ? <Pause size={18} /> : <Play size={18} />}
                     </Button>
@@ -331,9 +381,7 @@ const SingleRoomPage = () => {
                       variant="ghost"
                       size="sm"
                       className="text-white hover:text-pink-400 hover:bg-transparent p-1"
-                      onClick={() =>
-                        setPlaybackRate(playbackRate === 1 ? 1.5 : 1)
-                      }
+                      onClick={handlePlaybackRateChange}
                     >
                       {playbackRate === 1 ? "1x" : "1.5x"}
                     </Button>

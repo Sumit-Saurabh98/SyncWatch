@@ -29,9 +29,12 @@ export interface IRoom {
   videoId: string;
   participants: IParticipant[];
   videoState: {
-    currentTime: number;
-    isPlaying: boolean;
-    lastUpdated: Date;
+    isPlaying: number;
+    isMuted: boolean;
+    volume: number;
+    playbackRate: number;
+    subtitles: boolean;
+    seekTo: number;
   };
   createdAt: Date;
   updatedAt: Date;

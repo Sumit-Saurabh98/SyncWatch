@@ -76,21 +76,9 @@ const roomSchema = new mongoose.Schema(
         type: Boolean,
         default: false,
       },
-      volume: {
-        type: Number,
-        default: 0,
-      },
-      isMuted: {
-        type: Boolean,
-        default: false,
-      },
       playbackRate: {
         type: Number,
         default: 1,
-      },
-      subtitles: {
-        type:Boolean,
-        default: false
       },
       seekTo: {
         type: Number,
