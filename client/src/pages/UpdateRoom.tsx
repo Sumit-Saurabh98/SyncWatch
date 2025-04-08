@@ -99,7 +99,7 @@ const UpdateRoomPage = () => {
     }
   }, [singleRoom, form]);
 
-  const onSubmit = async (data) => {
+  const onSubmit = async (data: z.infer<typeof updateRoomSchema>) => {
     console.log("Submitting form with data:", data);
     setIsSubmitting(true);
     
