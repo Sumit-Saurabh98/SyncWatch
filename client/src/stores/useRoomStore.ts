@@ -10,6 +10,7 @@ export interface IRoomStore {
   isGettingAllRooms: boolean;
   isJoiningPublicRoom: boolean;
   isGettingRoomById: boolean;
+  isUpdatingRoom: boolean;
   isChangingVideoState:boolean;
   rooms: IRoom[];
   userCreatedRooms: IRoom[];
@@ -29,6 +30,7 @@ export interface IRoomStore {
   joinPublicRoom: (roomId: string) => Promise<boolean>;
   getRoomById: (roomId: string) => Promise<boolean>;
   changeVideoState: (roomId: string, isPlaying: boolean, playbackRate: number, seekTo: number) => Promise<boolean>;
+  updateRoom: (roomId: string, name: string, description: string, videoUrl: string, category: string, startDateTime: Date, isPrivate: boolean, accessCode: string) => Promise<boolean>;
 }
 
 export const useRoomStore = create<IRoomStore>((set, get) => ({
@@ -37,6 +39,7 @@ export const useRoomStore = create<IRoomStore>((set, get) => ({
   isGettingRoomsJoinedByUser: false,
   isGettingAllRooms: false,
   isJoiningPublicRoom: false,
+  isUpdatingRoom: false,
   isGettingRoomById: false,
   isChangingVideoState:false,
   rooms: [],
@@ -247,6 +250,10 @@ export const useRoomStore = create<IRoomStore>((set, get) => ({
       set({
         isJoiningPublicRoom: false,
         userJoinedRooms: [...get().userJoinedRooms, response.data.room],
+        rooms: [
+          ...get().rooms.filter((room) => room._id !== roomId),
+          response.data.room,
+        ],
       });
       return true;
     } catch (error) {
@@ -355,6 +362,87 @@ export const useRoomStore = create<IRoomStore>((set, get) => ({
       return false;
     } finally {
       set({ isChangingVideoState: false });
+    }
+  },
+
+  updateRoom: async (roomId, name, description, videoUrl, category, startDateTime: Date, isPrivate, accessCode) => {
+    set({ isUpdatingRoom: true });
+
+    if(!name || !description || !videoUrl || !category || !startDateTime) {
+      set({ isUpdatingRoom: false });
+      toast.error("Please fill all fields", {
+        style: {
+          borderRadius: "10px",
+          background: "#ec4899",
+          color: "white",
+        },
+      });
+      return false;
+    }
+
+    if(isPrivate && !accessCode) {
+      set({ isUpdatingRoom: false });
+      toast.error("Please enter access code for private room", {
+        style: {
+          borderRadius: "10px",
+          background: "#ec4899",
+          color: "white",
+        },
+      });
+      return false;
+    }
+
+    try {
+      const response = await syncapi.put(`/room/update/${roomId}`, {
+        name,
+        description,
+        videoUrl,
+        category,
+        startDateTime,
+        isPrivate,
+        accessCode
+      });
+      if (!response.data.success) {
+        toast.error(response.data.message || "Something went wrong", {
+          style: {
+            borderRadius: "10px",
+            background: "#ec4899",
+            color: "white",
+          },
+        });
+        set({ isUpdatingRoom: false });
+        return false;
+      }
+      set({
+        singleRoom: [response.data.room],
+        isUpdatingRoom: false,
+      });
+      toast.success(response.data.message || "Room updated successfully", {
+        style: {
+          borderRadius: "10px",
+          background: "#ec4899",
+          color: "white",
+        },
+      });
+      return true;
+      
+    } catch (error) {
+      console.error(error);
+      set({ isUpdatingRoom: false });
+      const axiosError = error as {
+        response?: { data?: { message?: string } };
+      };
+      toast.error(
+        axiosError.response?.data?.message || "Something went wrong",
+        {
+          style: {
+            borderRadius: "10px",
+            background: "#ec4899",
+            color: "white",
+          },
+        }
+      );
+      return false;
     }
   }
 }));

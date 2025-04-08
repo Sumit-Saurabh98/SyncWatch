@@ -21,10 +21,12 @@ export interface IRoom {
   videoUrl: string;
   createdBy: string;
   isPrivate: boolean;
+  category: string;
   accessCode: string;
   thumbnailUrl: string;
   isActive: boolean;
   isLive: boolean;
+  startDateTime: Date;
   messages: string[];
   videoId: string;
   participants: IParticipant[];

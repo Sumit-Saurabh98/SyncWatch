@@ -21,6 +21,7 @@ export interface IRoom {
   videoUrl: string;
   thumbnailUrl: string;
   videoId: string;
+  accessCode: string;
   messages: IMessage[];
   createdBy: {
     _id: string;

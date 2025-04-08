@@ -1,6 +1,6 @@
 import { useRoomStore } from "@/stores/useRoomStore";
 import { useEffect, useState, useRef } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -19,6 +19,7 @@ import {
   MessageSquare,
   X,
   Captions,
+  Settings2
 } from "lucide-react";
 import LoadingPage from "@/components/LoadingPage";
 import Chat from "@/components/rooms/Chat";
@@ -29,20 +30,18 @@ import { getSocket } from "@/socket/socket.client";
 import ReactPlayer from "react-player";
 
 const SingleRoomPage = () => {
-  // Player related state
-  const [isPlaying, setIsPlaying] = useState<boolean>(false);
+  // Local UI state (not related to video playback sync)
   const [volume, setVolume] = useState<number>(0.5);
   const [isMuted, setIsMuted] = useState<boolean>(false);
-  const [playbackRate, setPlaybackRate] = useState<number>(1);
   const [subtitlesEnabled, setSubtitlesEnabled] = useState<boolean>(false);
-  const [playedPercentage, setPlayedPercentage] = useState<number>(0);
-  const playerRef = useRef<ReactPlayer>(null);
-
-  // Chat related state
-  const [message, setMessage] = useState<string>("");
-  const emojiPickerRef = useRef<HTMLDivElement>(null);
   const [showEmojiPicker, setShowEmojiPicker] = useState<boolean>(false);
   const [showChat, setShowChat] = useState(true);
+  const [message, setMessage] = useState<string>("");
+  const navigate = useNavigate();
+
+  // Refs
+  const playerRef = useRef<ReactPlayer>(null);
+  const emojiPickerRef = useRef<HTMLDivElement>(null);
 
   // Get room ID from URL
   const { _id } = useParams<{ _id: string }>();
@@ -50,28 +49,18 @@ const SingleRoomPage = () => {
   // Store hooks
   const { user } = useAuthStore();
   const { sendMessages, isSendingMessages } = useMessageStore();
-  const { isGettingRoomById, singleRoom, getRoomById, changeVideoState } = useRoomStore();
+  const { isGettingRoomById, singleRoom, getRoomById, changeVideoState } =
+    useRoomStore();
+
+  console.log(singleRoom, "singleRoom");
 
   // Join room socket on component mount
   useEffect(() => {
     const socket = getSocket();
     socket.emit("join_room", _id as string);
 
-    // Listen for video state changes from other users
-    socket.on("video_state_changed", (data) => {
-      if (data.roomId === _id) {
-        setIsPlaying(data.isPlaying);
-        setPlaybackRate(data.playbackRate);
-        if (playerRef.current) {
-          playerRef.current.seekTo(data.seekTo / 100);
-        }
-        setPlayedPercentage(data.seekTo);
-      }
-    });
-
     return () => {
       socket.off("join_room");
-      socket.off("video_state_changed");
     };
   }, [_id]);
 
@@ -79,15 +68,6 @@ const SingleRoomPage = () => {
   useEffect(() => {
     getRoomById(_id as string);
   }, [getRoomById, _id]);
-
-  // Initialize video state from room data
-  useEffect(() => {
-    if (singleRoom && singleRoom[0]) {
-      setIsPlaying(singleRoom[0].videoState.isPlaying);
-      setPlaybackRate(singleRoom[0].videoState.playbackRate);
-      setPlayedPercentage(singleRoom[0].videoState.seekTo);
-    }
-  }, [singleRoom]);
 
   // Close emoji picker when clicking outside
   useEffect(() => {
@@ -106,6 +86,7 @@ const SingleRoomPage = () => {
     };
   }, []);
 
+  // UI handlers
   const toggleChat = () => {
     setShowChat(!showChat);
   };
@@ -118,41 +99,69 @@ const SingleRoomPage = () => {
     }
   };
 
-  // Video player controls with proper changeVideoState calls
+  // Video player control handlers - Using changeVideoState directly
   const handlePlayPause = () => {
-    const newPlayingState = !isPlaying;
-    setIsPlaying(newPlayingState);
-    changeVideoState(_id as string, newPlayingState, playbackRate, playedPercentage);
+    if (!singleRoom || !singleRoom[0]) return;
+
+    const currentState = singleRoom[0].videoState;
+    const newPlayingState = !currentState.isPlaying;
+
+    changeVideoState(
+      _id as string,
+      newPlayingState,
+      currentState.playbackRate,
+      currentState.seekTo
+    );
   };
 
   const handlePlaybackRateChange = () => {
-    const newRate = playbackRate === 1 ? 1.5 : 1;
-    setPlaybackRate(newRate);
-    changeVideoState(_id as string, isPlaying, newRate, playedPercentage);
+    if (!singleRoom || !singleRoom[0]) return;
+
+    const currentState = singleRoom[0].videoState;
+    const newRate = currentState.playbackRate === 1 ? 1.5 : 1;
+
+    changeVideoState(
+      _id as string,
+      currentState.isPlaying,
+      newRate,
+      currentState.seekTo
+    );
   };
 
   const handleSeekForward = () => {
-    if (!playerRef.current) return;
+    if (!playerRef.current || !singleRoom || !singleRoom[0]) return;
+
     const currentTime = playerRef.current.getCurrentTime() || 0;
     const duration = playerRef.current.getDuration() || 1;
     const newTime = currentTime + 10;
     const newPercentage = (newTime / duration) * 100;
-    
+
     playerRef.current.seekTo(newTime);
-    setPlayedPercentage(newPercentage);
-    changeVideoState(_id as string, isPlaying, playbackRate, newPercentage);
+
+    changeVideoState(
+      _id as string,
+      singleRoom[0].videoState.isPlaying,
+      singleRoom[0].videoState.playbackRate,
+      newPercentage
+    );
   };
 
   const handleSeekBackward = () => {
-    if (!playerRef.current) return;
+    if (!playerRef.current || !singleRoom || !singleRoom[0]) return;
+
     const currentTime = playerRef.current.getCurrentTime() || 0;
     const duration = playerRef.current.getDuration() || 1;
     const newTime = Math.max(0, currentTime - 10);
     const newPercentage = (newTime / duration) * 100;
-    
+
     playerRef.current.seekTo(newTime);
-    setPlayedPercentage(newPercentage);
-    changeVideoState(_id as string, isPlaying, playbackRate, newPercentage);
+
+    changeVideoState(
+      _id as string,
+      singleRoom[0].videoState.isPlaying,
+      singleRoom[0].videoState.playbackRate,
+      newPercentage
+    );
   };
 
   const toggleSubtitles = () => {
@@ -171,6 +180,13 @@ const SingleRoomPage = () => {
   if (isGettingRoomById || !singleRoom || !singleRoom[0]) {
     return <LoadingPage />;
   }
+
+  // Get video state directly from singleRoom
+  const {
+    isPlaying,
+    playbackRate,
+    seekTo: playedPercentage,
+  } = singleRoom[0].videoState;
 
   return (
     <div className="bg-gradient-to-br from-purple-900 via-violet-800 to-indigo-900 text-white h-screen flex flex-col overflow-hidden">
@@ -258,19 +274,29 @@ const SingleRoomPage = () => {
                 </div>
               </div>
               <div className="flex items-center gap-2">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="text-white hover:text-pink-400 hover:bg-transparent"
-                  onClick={toggleSubtitles}
-                >
-                  <Captions
-                    size={16}
-                    className={
-                      subtitlesEnabled ? "text-pink-400" : "text-white"
-                    }
-                  />
-                </Button>
+                {singleRoom[0].participants?.some(
+                  (participant) => participant.userId === user?._id && participant.role !== 'host'
+                ) && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="text-white hover:text-pink-400 hover:bg-transparent"
+                  >
+                    <span className="text-xs font-medium">Leave Room</span>
+                  </Button>
+                )}
+                {singleRoom[0].participants?.some(
+                  (participant) => participant.userId === user?._id && participant.role === 'host'
+                ) && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="text-white hover:text-pink-400 hover:bg-transparent cursor-pointer"
+                    onClick={() => navigate(`/room/update/${_id}`)}
+                  >
+                    <Settings2 size={16} className="cursor-pointer" />
+                  </Button>
+                )}
               </div>
             </div>
 
@@ -283,15 +309,17 @@ const SingleRoomPage = () => {
                 volume={volume}
                 muted={isMuted}
                 playbackRate={playbackRate}
-                onProgress={(state) => {
-                  setPlayedPercentage(state.played * 100);
-                }}
                 onSeek={(seconds) => {
                   // Calculate percentage based on duration and update
                   const duration = playerRef.current?.getDuration() || 1;
                   const newPercentage = (seconds / duration) * 100;
-                  setPlayedPercentage(newPercentage);
-                  changeVideoState(_id as string, isPlaying, playbackRate, newPercentage);
+
+                  changeVideoState(
+                    _id as string,
+                    isPlaying,
+                    playbackRate,
+                    newPercentage
+                  );
                 }}
                 width="100%"
                 height="100%"
@@ -319,7 +347,7 @@ const SingleRoomPage = () => {
             {/* Video Controls */}
             <div className="p-3 border-t border-indigo-700/50 bg-indigo-900/50 backdrop-blur-sm">
               <div className="flex flex-col gap-2">
-                {/* Progress Bar (Could be implemented with actual progress) */}
+                {/* Progress Bar */}
                 <div className="w-full h-1 bg-indigo-700/40 rounded-full overflow-hidden">
                   <div
                     className="h-full bg-gradient-to-r from-pink-500 to-purple-600"
@@ -353,6 +381,19 @@ const SingleRoomPage = () => {
                       onClick={handleSeekForward}
                     >
                       <FastForward size={18} />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="text-white hover:text-pink-400 hover:bg-transparent"
+                      onClick={toggleSubtitles}
+                    >
+                      <Captions
+                        size={16}
+                        className={
+                          subtitlesEnabled ? "text-pink-400" : "text-white"
+                        }
+                      />
                     </Button>
                   </div>
 

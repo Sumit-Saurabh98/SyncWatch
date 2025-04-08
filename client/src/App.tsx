@@ -12,7 +12,7 @@ import NotificationPage from "./pages/NotificationPage";
 import VerificationPage from "./pages/VerificationPage";
 import ForgotPassword from "./pages/ForgotPassword";
 import SingleRoomPage from "./pages/SingleRoomPage";
-import Chat from "./components/rooms/Chat";
+import UpdateRoomPage from "./pages/UpdateRoom";
 
 
 
@@ -39,6 +39,7 @@ function App() {
       <Route path="/verification" element={!user ? <VerificationPage /> : <Navigate to={"/"} />} />
       <Route path="/forgotpassword" element={<ForgotPassword/>} />
       <Route path="/room/:_id" element={user ? <SingleRoomPage /> : <Navigate to={"/login"} />} />
+      <Route path="/room/update/:_id" element={user ? <UpdateRoomPage /> : <Navigate to={"/login"} />} />
     </Routes>
     <ToastContainer
       position="top-center"

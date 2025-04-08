@@ -3,6 +3,7 @@ import Room from "../models/room.model.js";
 import User from "../models/user.model.js";
 import { thumbnailGenerator } from "../utils/thumbnailGenerator.js";
 import { videoIdExtractor } from "../utils/videoIdExtractor.js";
+import { start } from "repl";
 
 export const createRoom = async (req: Request, res: Response): Promise<void> => {
     const {name, description, videoUrl, category, startDateTime} = req.body;
@@ -37,71 +38,6 @@ export const createRoom = async (req: Request, res: Response): Promise<void> => 
     } catch (error) {
         console.log(error);
         res.status(500).json({success: false, message: "Internal server error"});
-    }
-}
-
-export const makeRoomPrivate = async (req: Request, res: Response): Promise<void> => {
-    const {accessCode} = req.body;
-    const {roomId} = req.params;
-
-    if( !roomId || !accessCode) {
-        res.status(400).json({success: false, message: "All fields are required"});
-        return;
-    }
-
-    try {
-        const existingRoom = await Room.findOne({_id: roomId});
-
-        if(!existingRoom) {
-            res.status(400).json({success: false, message: "Room not found"});
-            return;
-        }
-        
-        if(existingRoom.createdBy.toString() !== req.user._id.toString()) {
-            res.status(403).json({success: false, message: "You are not authorized to make this room private"});
-            return;
-        }
-
-        existingRoom.isPrivate = true;
-        existingRoom.accessCode = accessCode;
-        const room = await existingRoom.save();
-
-        res.status(201).json({success: true, message: "Room created successfully", room});
-    } catch (error) {
-        console.log(error);
-        res.status(500).json({success: false, message: "Internal server error"});   
-    }
-}
-
-export const makeRoomPublic = async (req: Request, res: Response): Promise<void> => {
-    const {roomId} = req.params;
-
-    if( !roomId) {
-        res.status(400).json({success: false, message: "All fields are required"});
-        return;
-    }
-
-    try {
-        const existingRoom = await Room.findOne({_id: roomId});
-
-        if(!existingRoom) {
-            res.status(400).json({success: false, message: "Room not found"});
-            return;
-        }
-        
-        if(existingRoom.createdBy.toString() !== req.user._id.toString()) {
-            res.status(403).json({success: false, message: "You are not authorized to make this room public"});
-            return;
-        }
-
-        existingRoom.isPrivate = false;
-        existingRoom.accessCode = "";
-        const room = await existingRoom.save();
-
-        res.status(201).json({success: true, message: "Room created successfully", room});
-    } catch (error) {
-        console.log(error);
-        res.status(500).json({success: false, message: "Internal server error"});   
     }
 }
 
@@ -342,13 +278,29 @@ export const leaveRoom = async (req: Request, res: Response): Promise<void> => {
     }
 }
 
-export const changeRoomName = async (req: Request, res: Response): Promise<void> => {
-    const {name} = req.body;
+export const updateRoom = async (req:Request, res:Response): Promise<void> => {
     const {roomId} = req.params;
+    const {name, description, videoUrl, category, startDateTime, isPrivate, accessCode} = req.body;
 
-    if(!name) {
-        res.status(400).json({success: false, message: "Name is required"});
+    if(!roomId) {
+        res.status(400).json({success: false, message: "Room id is required"});
         return;
+    }
+
+    if(!name || !description || !videoUrl || !category || !startDateTime) {
+        res.status(400).json({success: false, message: "All fields are required"});
+        return;
+    }
+
+    if(isPrivate && !accessCode) {
+        res.status(400).json({success: false, message: "Access code is required for private room"});
+        return;
+    }
+    if(isPrivate && accessCode) {
+        if(accessCode.length < 6) {
+            res.status(400).json({success: false, message: "Access code must be at least 4 characters long"});
+            return;
+        }
     }
 
     try {
@@ -357,59 +309,28 @@ export const changeRoomName = async (req: Request, res: Response): Promise<void>
             res.status(404).json({success: false, message: "Room not found"});
             return;
         }
-        room.name = name;
-        await room.save();
-        res.status(200).json({success: true, message: "Room name changed successfully", room});
-    } catch (error) {
-        console.log(error);
-        res.status(500).json({success: false, message: "Internal server error"});
-    }
-}
 
-export const changeRoomDescription = async (req: Request, res: Response): Promise<void> => {
-    const {description} = req.body;
-    const {roomId} = req.params;
-
-    if(!description) {
-        res.status(400).json({success: false, message: "Description is required"});
-        return;
-    }
-
-    try {
-        const room = await Room.findById(roomId);
-        if(!room) {
-            res.status(404).json({success: false, message: "Room not found"});
+        if(room.createdBy.toString() !== req.user._id.toString()) {
+            res.status(403).json({success: false, message: "You are not authorized to update this room"});
             return;
         }
-        room.description = description;
-        await room.save();
-        res.status(200).json({success: true, message: "Room description changed successfully", room});
-    } catch (error) {
-        console.log(error);
-        res.status(500).json({success: false, message: "Internal server error"});
-    }
-}
+        if(startDateTime < new Date()) {
+            res.status(400).json({success: false, message: "Start date time must be in the future"});
+            return;
+        }
 
-export const changeRoomVideoUrl = async (req: Request, res: Response): Promise<void> => {
-    const {videoUrl} = req.body;
-    const {roomId} = req.params;
-
-    if(!videoUrl) {
-        res.status(400).json({success: false, message: "Video URL is required"});
-        return;
-    }
-
-    try {
-        const room = await Room.findById(roomId);
-        if(!room) {
-            res.status(404).json({success: false, message: "Room not found"});
+        if(room.isLive){
+            res.status(400).json({success: false, message: "Room can not be updated!"});
             return;
         }
         const {maxResolution} = thumbnailGenerator(videoUrl);
-        room.videoUrl = videoUrl;
-        room.thumbnailUrl = maxResolution;
-        await room.save();
-        res.status(200).json({success: true, message: "Room video URL changed successfully", room});
+        const videoId = videoIdExtractor(videoUrl);
+        const newRoom = Room.findByIdAndUpdate(roomId, {...room, name, description, videoUrl, thumbnailUrl: maxResolution, videoId, category, startDateTime, isPrivate, accessCode}, {new: true});
+        if(!newRoom) {
+            res.status(404).json({success: false, message: "Room not found"});
+            return;
+        }
+        res.status(200).json({success: true, message: "Room updated successfully", room:newRoom});  
     } catch (error) {
         console.log(error);
         res.status(500).json({success: false, message: "Internal server error"});
